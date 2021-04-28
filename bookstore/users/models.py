@@ -38,11 +38,13 @@ class RegisterSchema(ma.Schema):
 
     @validates_schema
     def validatePassword(self, data, **kwargs):
+        '''Validates that passwords match'''
         if data["password"] != data["password_confirmation"]:
             raise ValidationError("Passwords must match")
     
     @validates('email')
     def validateEmailUnique(self, value):
+        '''Validates that email is unique'''
         user = User.query.filter_by(email=value).first()
 
         if user:
@@ -54,7 +56,8 @@ class LoginSchema(ma.Schema):
     password = fields.Str()
 
     @validates_schema
-    def userNotInDb(self, data, **kwargs):
+    def userExistsAndPasswordCorrect(self, data, **kwargs):
+        '''First validates that the user exists and only then validates the password for the given user'''
         value = data['email']
         password = data['password']
 
