@@ -1,5 +1,5 @@
 from flask import (Blueprint, request, jsonify)
-from .models import UserSchema, User
+from .models import UserSchema, User, RegisterSchema, LoginSchema
 from ..extensions import db, bcrypt
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended import jwt_required
@@ -45,12 +45,12 @@ def removeUser(id):
 
 @blueprint.route('/register', methods=['POST'])
 def registerUser():
-    user_schema = UserSchema(exclude=['id', 'books'])
+    schema = RegisterSchema()
     password = request.json['password']
     email = request.json['email']
 
     try:
-        user_schema.load(request.json)
+        schema.load(request.json)
     except ValidationError as err:
         return err.messages, 400
 
@@ -58,29 +58,23 @@ def registerUser():
 
     db.session.add(user)
     db.session.commit()
-    
-    payload = user_schema.dump(user)
 
-    return payload, 201
-    return 'Bad things happened!', 400
+    payload = user_schema.dump(user)
+    
+    return jsonify(payload), 201
     
 
 
 @blueprint.route('/login', methods=['POST'])
 def login():
-    user_schema = UserSchema(exclude=['id', 'books'])
+    schema = LoginSchema()
     email = request.json['email']
     password = request.json['password']
 
     try:
-        user_schema.load(request.json)
+        schema.load(request.json)
     except ValidationError as err:
         return err.messages
-    
-    user = User.query.filter_by(email = email).first()
-
-    if not user or not user.check_password(password):
-        raise Exception('Bad credentials')
         
     access_token = create_access_token(identity=email)
     return jsonify(access_token)
