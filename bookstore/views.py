@@ -2,6 +2,7 @@ from flask import (Blueprint, jsonify, request)
 from .extensions import db
 from .models import Book, BookSchema
 from flask_jwt_extended import jwt_required
+from marshmallow import ValidationError
 
 blueprint = Blueprint('api', __name__, )
 
@@ -50,6 +51,11 @@ def deleteBook(id):
 def addBook():
     title = request.json['title'] 
     author = request.json['author']
+
+    try:
+        book_schema.load(request.json)
+    except ValidationError as err:
+        return err.messages, 400
 
     book = Book(title, author)
     
