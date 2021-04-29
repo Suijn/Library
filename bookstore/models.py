@@ -1,5 +1,7 @@
 from .extensions import db, ma
 from sqlalchemy.orm import relationship
+from marshmallow import Schema, fields, validates, ValidationError,validates_schema
+
 
 class Book(db.Model):
     __tablename__ = 'books'
@@ -26,5 +28,12 @@ class Book(db.Model):
 
 
 class BookSchema(ma.Schema):
-    class Meta:
-        fields = ('id', 'title', 'author', 'pages', 'isReserved', 'user')
+    id = fields.Integer()
+    title = fields.Str()
+    author = fields.Str()
+    pages = fields.Integer()
+    isReserved = fields.Bool()
+    user = fields.Nested("UserSchema", only=("id", "email"))
+
+
+

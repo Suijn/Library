@@ -1,8 +1,8 @@
 from flask import (Blueprint, request, jsonify)
 from .models import UserSchema, User, RegisterSchema, LoginSchema
 from ..extensions import db, bcrypt
-from flask_jwt_extended import create_access_token
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import create_access_token, create_refresh_token
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from marshmallow import ValidationError
 
 
@@ -75,8 +75,22 @@ def login():
         schema.load(request.json)
     except ValidationError as err:
         return err.messages
-        
-    access_token = create_access_token(identity=email)
-    return jsonify(access_token)
+    
+    user = User.query.filter_by(email=email).first()
+
+    access_token = create_access_token(identity=user.id)
+    refresh_token = create_refresh_token(identity=user.id)
+
+    return jsonify(access_token = access_token, refresh_token = refresh_token)
+
+
+@blueprint.route('/refreshToken', methods=['POST'])
+@jwt_required(refresh=True)
+def refreshToken():
+    identity = get_jwt_identity()
+    access_token = create_access_token(identity = identity)
+
+    return jsonify(access_token=access_token)
+
 
 

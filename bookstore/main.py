@@ -1,6 +1,8 @@
 from flask import Flask
 from . import views, users
 
+
+
 from .extensions import (
     db,
     ma,

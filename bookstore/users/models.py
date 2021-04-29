@@ -73,6 +73,4 @@ class UserSchema(ma.Schema):
     id = fields.Integer()
     password = fields.Str()
     email = fields.Email()
-    books = fields.Nested(BookSchema, many=True)
-    # class Meta:
-    #     fields = ('id', 'password', 'email', 'books')
+    books = fields.Nested("BookSchema", many=True)

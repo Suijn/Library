@@ -1,7 +1,7 @@
 from flask import (Blueprint, jsonify, request)
 from .extensions import db
 from .models import Book, BookSchema
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from marshmallow import ValidationError
 
 blueprint = Blueprint('api', __name__, )
@@ -74,16 +74,47 @@ def updateBook(id):
 
     title = request.json['title']
     author = request.json['author']
-    pages = request.json['pages']
+
 
     book.title = title
     book.author = author
-    book.pages = pages
 
     db.session.commit()
 
     payload = book_schema.jsonify(book)
     return payload, 200
+
+
+@blueprint.route('/registerBook/<id>', methods=['PUT'])
+@jwt_required()
+def registerBook(id):
+    user_id = get_jwt_identity()
+
+    book = Book.query.get(id)
+
+    if book:
+        if book.isReserved == False or not book.user:
+            book.user_id = user_id
+            book.isReserved = True
+
+            db.session.commit()
+
+            payload = book_schema.jsonify(book)
+            return payload, 200
+        else:
+            raise Exception('Sorry, this book is already reserved!')
+
+
+
+
+    
+
+
+
+
+
+
+
 
 
 
