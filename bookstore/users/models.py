@@ -4,6 +4,35 @@ from ..extensions import (bcrypt)
 from marshmallow import Schema, fields, validates, ValidationError,validates_schema
 from ..models import BookSchema
 
+
+association_table = db.Table('roles_users',
+    db.Column('roles_id', db.Integer, db.ForeignKey('roles.id')),
+    db.Column('users_id', db.Integer, db.ForeignKey('users.id'))
+)
+
+class Role(db.Model):
+    """A role for users."""
+
+    __tablename__ = 'roles'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(), unique=True, nullable=False)
+    # user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    # user = db.relationship("User", backref='roles')
+    users = db.relationship("User", secondary=association_table, backref='roles')
+
+    def __init__(self, name):
+        self.name = name
+
+    
+    def __repr__(self):
+        return f'{self.__class__}'
+
+
+class RoleSchema(ma.Schema):
+    name = fields.Str()
+    user_identification = fields.Nested("UserSchema", only=("id",), many=True)
+
+
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
@@ -74,3 +103,5 @@ class UserSchema(ma.Schema):
     password = fields.Str()
     email = fields.Email()
     books = fields.Nested("BookSchema", many=True)
+    roles = fields.Nested("RoleSchema", many=True)
+
