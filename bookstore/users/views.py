@@ -1,9 +1,10 @@
 from flask import (Blueprint, request, jsonify)
-from .models import UserSchema, User, RegisterSchema, LoginSchema
+from .models import UserSchema, User, RegisterSchema, LoginSchema, Role
 from ..extensions import db, bcrypt
 from flask_jwt_extended import create_access_token, create_refresh_token
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from marshmallow import ValidationError
+from sqlalchemy.exc import NoResultFound
 
 
 blueprint = Blueprint('users', __name__)
@@ -54,7 +55,14 @@ def registerUser():
     except ValidationError as err:
         return err.messages, 400
 
+    """A role is created before first user"""
+    try:
+        role = Role.query.filter_by(name='User').one()
+    except NoResultFound as err:
+        role = Role('User')
+   
     user = User(password, email)
+    user.roles.append(role)
 
     db.session.add(user)
     db.session.commit()
