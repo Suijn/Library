@@ -1,3 +1,4 @@
+"""Models module."""
 from ..extensions import db, ma
 from sqlalchemy.orm import relationship
 from ..extensions import (bcrypt)
@@ -5,6 +6,7 @@ from marshmallow import Schema, fields, validates, ValidationError,validates_sch
 from ..models import BookSchema
 
 
+# Associate table for users and roles
 association_table = db.Table('roles_users',
     db.Column('roles_id', db.Integer, db.ForeignKey('roles.id')),
     db.Column('users_id', db.Integer, db.ForeignKey('users.id'))
@@ -16,8 +18,6 @@ class Role(db.Model):
     __tablename__ = 'roles'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(), unique=True, nullable=False)
-    # user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    # user = db.relationship("User", backref='roles')
     users = db.relationship("User", secondary=association_table, backref='roles')
 
     def __init__(self, name):
@@ -52,6 +52,13 @@ class User(db.Model):
     def check_password(self, value):
         return bcrypt.check_password_hash(self.password, value)
 
+    def has_roles(self, roles):
+        user_roles = [x.name for x in self.roles]
+
+        return set(roles).issubset(set(user_roles))
+
+        
+
     def __repr__(self):
         return f'{self.__class__}'
 
@@ -67,13 +74,15 @@ class RegisterSchema(ma.Schema):
 
     @validates_schema
     def validatePassword(self, data, **kwargs):
-        '''Validates that passwords match'''
+        '''Validates that passwords match.'''
+
         if data["password"] != data["password_confirmation"]:
             raise ValidationError("Passwords must match")
     
     @validates('email')
     def validateEmailUnique(self, value):
-        '''Validates that email is unique'''
+        '''Validates that email is unique.'''
+
         user = User.query.filter_by(email=value).first()
 
         if user:
@@ -86,7 +95,8 @@ class LoginSchema(ma.Schema):
 
     @validates_schema
     def userExistsAndPasswordCorrect(self, data, **kwargs):
-        '''First validates that the user exists and only then validates the password for the given user'''
+        '''First validates that the user exists and only then validates the password for the given user.'''
+
         value = data['email']
         password = data['password']
 

@@ -5,6 +5,7 @@ from flask_jwt_extended import create_access_token, create_refresh_token
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from marshmallow import ValidationError
 from sqlalchemy.exc import NoResultFound
+from ..decorators import require_role
 
 
 blueprint = Blueprint('users', __name__)
@@ -14,6 +15,7 @@ users_schema = UserSchema(many=True)
 
 @blueprint.route('/users', methods=['GET'])
 @jwt_required()
+@require_role(['Admin'])
 def getUsers():
     users = User.query.all()
     payload = users_schema.dump(users)
@@ -96,6 +98,7 @@ def login():
 @jwt_required(refresh=True)
 def refreshToken():
     identity = get_jwt_identity()
+    
     access_token = create_access_token(identity = identity)
 
     return jsonify(access_token=access_token)
