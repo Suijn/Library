@@ -3,6 +3,7 @@ from .extensions import db
 from .models import Book, BookSchema
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from marshmallow import ValidationError
+from .decorators import require_role
 
 blueprint = Blueprint('api', __name__, )
 
@@ -12,6 +13,7 @@ books_schema = BookSchema(many=True)
 
 @blueprint.route('/books', methods=['GET'])
 @jwt_required()
+@require_role()
 def getBooks():
     books = Book.query.all()
 
@@ -22,6 +24,7 @@ def getBooks():
 
 @blueprint.route('/book/<id>', methods=['GET'])
 @jwt_required()
+@require_role()
 def getBook(id):
     book = Book.query.get(id)
 
@@ -32,6 +35,7 @@ def getBook(id):
 
 @blueprint.route('/book/<id>', methods=['DELETE'])
 @jwt_required()
+@require_role(['Admin'])
 def deleteBook(id):
     book = Book.query.get(id)
 
@@ -48,6 +52,7 @@ def deleteBook(id):
 
 @blueprint.route('/book', methods=['POST'])
 @jwt_required()
+@require_role(['Admin'])
 def addBook():
     title = request.json['title'] 
     author = request.json['author']
@@ -69,6 +74,7 @@ def addBook():
 
 @blueprint.route('/book/<id>', methods=['PUT'])
 @jwt_required()
+@require_role(['Admin'])
 def updateBook(id):
     book = Book.query.get(id)
 
@@ -87,6 +93,7 @@ def updateBook(id):
 
 @blueprint.route('/registerBook/<id>', methods=['PUT'])
 @jwt_required()
+@require_role()
 def registerBook(id):
     user_id = get_jwt_identity()
 

@@ -1,14 +1,13 @@
 from flask import Flask
 from . import views, users
-
-
-
+from users.models import User
 from .extensions import (
     db,
     ma,
     bcrypt,
     jwt
 )
+
 
 def create_app():
     app = Flask(__name__)
@@ -32,3 +31,8 @@ def register_extensions(app):
 def register_blueprints(app):
     app.register_blueprint(views.blueprint)
     app.register_blueprint(users.views.blueprint)
+
+
+
+
+

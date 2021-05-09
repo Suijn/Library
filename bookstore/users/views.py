@@ -24,6 +24,7 @@ def getUsers():
 
 @blueprint.route('/user/<id>', methods=['GET'])
 @jwt_required()
+@require_role(['Admin'])
 def getUser(id):
     user = User.query.get(id)
     payload = user_schema.dump(user)
@@ -33,6 +34,7 @@ def getUser(id):
 
 @blueprint.route('/user/<id>', methods=['DELETE'])
 @jwt_required()
+@require_role(['Admin'])
 def removeUser(id):
     user = User.query.get(id)
 

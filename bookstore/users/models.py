@@ -110,7 +110,6 @@ class LoginSchema(ma.Schema):
 
 class UserSchema(ma.Schema):
     id = fields.Integer()
-    password = fields.Str()
     email = fields.Email()
     books = fields.Nested("BookSchema", many=True)
     roles = fields.Nested("RoleSchema", many=True)
