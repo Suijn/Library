@@ -55,7 +55,12 @@ class User(db.Model):
     def has_roles(self, roles):
         user_roles = [x.name for x in self.roles]
 
-        return set(roles).issubset(set(user_roles))
+        return set(user_roles).issubset(set(roles))
+    
+    def has_role(self, role):
+        user_roles = [x.name for x in self.roles]
+
+        return role in user_roles
 
         
 

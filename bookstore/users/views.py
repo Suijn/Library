@@ -1,11 +1,11 @@
-from flask import (Blueprint, request, jsonify)
+from flask import (Blueprint, request, jsonify, abort)
 from .models import UserSchema, User, RegisterSchema, LoginSchema, Role
 from ..extensions import db, bcrypt
 from flask_jwt_extended import create_access_token, create_refresh_token
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from marshmallow import ValidationError
 from sqlalchemy.exc import NoResultFound
-from ..decorators import require_role
+from ..decorators import require_role, isAdminOrOwner
 
 
 blueprint = Blueprint('users', __name__)
@@ -39,7 +39,7 @@ def removeUser(id):
     user = User.query.get(id)
 
     if not user:
-        raise Exception('An Error happened while removing the user')
+        abort(404)
     payload = user_schema.dump(user)
 
     db.session.delete(user)
@@ -59,7 +59,7 @@ def registerUser():
     except ValidationError as err:
         return err.messages, 400
 
-    """A role is created before first user"""
+    #A role is created before first user
     try:
         role = Role.query.filter_by(name='User').one()
     except NoResultFound as err:
