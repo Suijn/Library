@@ -119,3 +119,11 @@ class UserSchema(ma.Schema):
     books = fields.Nested("BookSchema", many=True)
     roles = fields.Nested("RoleSchema", many=True)
 
+    @validates('email')
+    def validateEmailUnique(self, value):
+        '''Validates that email is unique.'''
+        user = User.query.filter_by(email=value).first()
+
+        if user:
+            raise ValidationError('Provided email is already in use!')
+

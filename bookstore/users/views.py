@@ -48,6 +48,40 @@ def removeUser(id):
     return payload, 200
 
 
+@blueprint.route('/user/changeEmail/<id>', methods=['PATCH'])
+@jwt_required()
+@require_role(['Admin', 'User'])
+@isAdminOrOwner()
+def changeUserEmail(id):
+    """
+    Updates user email.
+        An Admin can update every user.
+        A Normal user can only update his own email.
+
+    The new email address has to be different from the previous one.
+    """
+    schema = UserSchema(only=('email',))
+    email = request.json['email']  
+    user = User.query.get(id)  
+    
+    if not user:
+        abort(404)
+    if user.email == email:
+        abort(400, 'The new email address has to be different from the previous one.')
+
+    try:
+        schema.load(request.json)
+    except ValidationError as err:
+        return err.messages, 400
+
+    user.email = email
+    payload = user_schema.dump(user)
+
+    db.session.commit()
+
+    return payload, 200
+
+
 @blueprint.route('/register', methods=['POST'])
 def registerUser():
     schema = RegisterSchema()
