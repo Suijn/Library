@@ -33,3 +33,19 @@ def isAdminOrOwner():
             return abort(401)
         return decorator
     return wrapper 
+
+
+def isOwner():
+    """A permission decorator to check whether the user is the owner of the account"""
+    def wrapper(func):
+        @wraps(func)
+        def decorator(*args, **kwargs):
+            current_user = User.query.get(get_jwt_identity())
+            if current_user:
+                if current_user.id == int(kwargs['id']):
+                    print('Owner!')
+                    return func(*args, **kwargs)
+                return abort(401)
+            return abort(401)
+        return decorator
+    return wrapper

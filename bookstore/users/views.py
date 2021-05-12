@@ -5,7 +5,7 @@ from flask_jwt_extended import create_access_token, create_refresh_token
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from marshmallow import ValidationError
 from sqlalchemy.exc import NoResultFound
-from ..decorators import require_role, isAdminOrOwner
+from ..decorators import require_role, isAdminOrOwner, isOwner
 
 
 blueprint = Blueprint('users', __name__)
@@ -80,6 +80,7 @@ def changeUserEmail(id):
     db.session.commit()
 
     return payload, 200
+
 
 
 @blueprint.route('/register', methods=['POST'])
