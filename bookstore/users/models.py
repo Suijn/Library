@@ -73,9 +73,9 @@ class User(db.Model):
 
 
 class RegisterSchema(ma.Schema):
-    email = fields.Email()
-    password = fields.Str()
-    password_confirmation = fields.Str()
+    email = fields.Email(required=True)
+    password = fields.Str(required=True)
+    password_confirmation = fields.Str(required=True)
 
     @validates_schema
     def validatePassword(self, data, **kwargs):
@@ -126,4 +126,25 @@ class UserSchema(ma.Schema):
 
         if user:
             raise ValidationError('Provided email is already in use!')
+
+class UpdatePasswordSchema(ma.Schema):
+    """Schema to update user password"""
+    password = fields.Str(required=True)
+    password_confirmation = fields.Str(required=True)
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user') if 'user' in kwargs else None
+        super().__init__(*args,**kwargs)
+
+    @validates_schema
+    def validatePassword(self, data, **kwargs):
+        '''
+        Validates that passwords match.
+        Validates that the new password is different from the previous one
+        '''
+
+        if data["password"] != data["password_confirmation"]:
+            raise ValidationError("Passwords must match")
+        if self.user.check_password(data["password"]):
+            raise ValidationError("Password must be different from the previous one.")
 

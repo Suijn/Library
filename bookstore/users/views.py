@@ -1,5 +1,5 @@
 from flask import (Blueprint, request, jsonify, abort)
-from .models import UserSchema, User, RegisterSchema, LoginSchema, Role
+from .models import UserSchema, User, RegisterSchema, LoginSchema, Role, UpdatePasswordSchema
 from ..extensions import db, bcrypt
 from flask_jwt_extended import create_access_token, create_refresh_token
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -81,7 +81,33 @@ def changeUserEmail(id):
 
     return payload, 200
 
+@blueprint.route('/user/changePassword/<id>', methods=['PATCH'])
+@jwt_required()
+@require_role(['User'])
+@isOwner()
+def changeUserPassword(id):
+    """
+    Updates user password.
+        Only the owner of the account can update his password.
 
+        Password must be different from the previous one.
+    """
+
+    current_user = User.query.get(id)
+    if not current_user:
+        abort(404)
+    schema = UpdatePasswordSchema(user = current_user) 
+
+    try:
+        schema.load(request.json)
+    except ValidationError as err:
+        return err.messages, 400
+    
+    password = request.json['password']
+    current_user.set_password(password)
+
+    db.session.commit()
+    return '', 204
 
 @blueprint.route('/register', methods=['POST'])
 def registerUser():
