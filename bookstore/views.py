@@ -37,10 +37,7 @@ def getBook(id):
 @jwt_required()
 @require_role(['Admin'])
 def deleteBook(id):
-    book = Book.query.get(id)
-
-    if not book:
-        raise Exception('An Error happened during removing the book!')
+    book = Book.get_or_404(id)
 
     payload = book_schema.dump(book)
 
@@ -72,44 +69,26 @@ def addBook():
     return payload, 201 
 
 
-@blueprint.route('/book/<id>', methods=['PUT'])
-@jwt_required()
-@require_role(['Admin'])
-def updateBook(id):
-    book = Book.query.get(id)
-
-    title = request.json['title']
-    author = request.json['author']
 
 
-    book.title = title
-    book.author = author
 
-    db.session.commit()
-
-    payload = book_schema.jsonify(book)
-    return payload, 200
-
-
-@blueprint.route('/registerBook/<id>', methods=['PUT'])
+@blueprint.route('/registerBook/<id>', methods=['PATCH'])
 @jwt_required()
 @require_role()
 def registerBook(id):
     user_id = get_jwt_identity()
+    book = Book.get_or_404(id)
 
-    book = Book.query.get(id)
+    if book.isReserved == False or not book.user:
+        book.user_id = user_id
+        book.isReserved = True
 
-    if book:
-        if book.isReserved == False or not book.user:
-            book.user_id = user_id
-            book.isReserved = True
+        db.session.commit()
 
-            db.session.commit()
-
-            payload = book_schema.jsonify(book)
-            return payload, 200
-        else:
-            raise Exception('Sorry, this book is already reserved!')
+        payload = book_schema.jsonify(book)
+        return payload, 200
+    else:
+        raise Exception('Sorry, this book is already reserved!')
 
 
 

@@ -45,7 +45,7 @@ def create_role(role_name):
     """
 
     try:
-        #If found do nothing.
+        #If found, do nothing.
         role = Role.query.filter_by(name=role_name).one() 
     except NoResultFound as err:
         role = Role(role_name)
@@ -59,7 +59,7 @@ def create_role(role_name):
 @click.argument('user_id', nargs=1)
 def assign_role_to_user(role_id, user_id):
     """
-    A CLI command to add a role to an existing user.
+    A CLI command to assign a role to an existing user.
     
     Parameters:
         role_id,
