@@ -4,6 +4,7 @@ from sqlalchemy.orm import relationship
 from ..extensions import (bcrypt)
 from marshmallow import Schema, fields, validates, ValidationError,validates_schema
 from ..models import BookSchema
+from flask import abort
 
 
 # Associate table for users and roles
@@ -62,6 +63,18 @@ class User(db.Model):
 
         return role in user_roles
 
+    @classmethod
+    def get_or_404(cls, id):
+        """
+        A class method to get a user from the database.
+        Abort if user is None.
+        """
+        user = User.query.get(id)
+
+        if not user:
+            abort(404)
+        return user
+            
         
 
     def __repr__(self):

@@ -26,7 +26,7 @@ def getUsers():
 @jwt_required()
 @require_role(['Admin'])
 def getUser(id):
-    user = User.query.get(id)
+    user = User.get_or_404(id)
     payload = user_schema.dump(user)
 
     return payload, 200
@@ -36,10 +36,8 @@ def getUser(id):
 @jwt_required()
 @require_role(['Admin'])
 def removeUser(id):
-    user = User.query.get(id)
+    user = User.get_or_404(id)
 
-    if not user:
-        abort(404)
     payload = user_schema.dump(user)
 
     db.session.delete(user)
@@ -62,10 +60,8 @@ def changeUserEmail(id):
     """
     schema = UserSchema(only=('email',))
     email = request.json['email']  
-    user = User.query.get(id)  
+    user = User.get_or_404(id) 
     
-    if not user:
-        abort(404)
     if user.email == email:
         abort(400, 'The new email address has to be different from the previous one.')
 
@@ -93,9 +89,7 @@ def changeUserPassword(id):
         Password must be different from the previous one.
     """
 
-    current_user = User.query.get(id)
-    if not current_user:
-        abort(404)
+    current_user = User.get_or_404(id)
     schema = UpdatePasswordSchema(user = current_user) 
 
     try:
