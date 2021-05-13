@@ -42,9 +42,9 @@ def create_role(role_name):
     """
 
     try:
-        role = Role.query.filter_by(name=role_name).one()
+        #If found do nothing.
+        role = Role.query.filter_by(name=role_name).one() 
     except NoResultFound as err:
         role = Role(role_name)
-    
-    db.session.add(role)
-    db.session.commit()
+        db.session.add(role)
+        db.session.commit()
