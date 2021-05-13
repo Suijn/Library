@@ -19,13 +19,16 @@ def create_admin_user(email, password):
     """
     admin = User(password, email)
 
-    #Create an Admin role if it's not in database yet.
+    #Create Admin and User roles if not found.
     try:
-        role = Role.query.filter_by(name='Admin').one()
+        admin_role = Role.query.filter_by(name='Admin').one()
+        user_role = Role.query.filter_by(name='User').one()
     except NoResultFound as err:
-        role = Role('Admin')
+        admin_role = Role('Admin')
+        user_role = Role('User')
     
-    admin.roles.append(role)
+    admin.roles.append(admin_role)
+    admin.roles.append(user_role)
 
     db.session.add(admin)
     db.session.commit()
