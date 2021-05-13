@@ -1,7 +1,7 @@
 from .extensions import db, ma
 from sqlalchemy.orm import relationship
 from marshmallow import Schema, fields, validates, ValidationError,validates_schema
-
+from flask import abort
 
 class Book(db.Model):
     __tablename__ = 'books'
@@ -21,6 +21,19 @@ class Book(db.Model):
     def __str__(self):
         return f'id: {self.id}, title: {self.title}'
 
+    
+    @classmethod
+    def get_or_404(cls, id):
+        """
+        A class method to get a book from the database.
+        Abort if book is None.
+        """
+        book = Book.query.get(id)
+        
+        if not book:
+            print(book)
+            abort(404)
+        return book
     
     def __init__(self, title, author):
         self.title = title

@@ -29,3 +29,22 @@ def create_admin_user(email, password):
 
     db.session.add(admin)
     db.session.commit()
+
+@click.command()
+@with_appcontext
+@click.argument('role_name', nargs=1)
+def create_role(role_name):
+    """
+    A CLI command to create a role.
+    
+    Parameters:
+        role_name
+    """
+
+    try:
+        role = Role.query.filter_by(name=role_name).one()
+    except NoResultFound as err:
+        role = Role(role_name)
+    
+    db.session.add(role)
+    db.session.commit()

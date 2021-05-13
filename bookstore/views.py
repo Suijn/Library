@@ -26,7 +26,7 @@ def getBooks():
 @jwt_required()
 @require_role()
 def getBook(id):
-    book = Book.query.get(id)
+    book = Book.get_or_404(id)
 
     paylaod = book_schema.dump(book)
 
