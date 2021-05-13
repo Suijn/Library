@@ -48,7 +48,7 @@ def removeUser(id):
 
 @blueprint.route('/user/changeEmail/<id>', methods=['PATCH'])
 @jwt_required()
-@require_role(['Admin', 'User'])
+@require_role(['User'])
 @isAdminOrOwner()
 def changeUserEmail(id):
     """

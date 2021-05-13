@@ -48,3 +48,23 @@ def create_role(role_name):
         role = Role(role_name)
         db.session.add(role)
         db.session.commit()
+
+
+@click.command()
+@with_appcontext
+@click.argument('role_id', nargs=1)
+@click.argument('user_id', nargs=1)
+def assign_role_to_user(role_id, user_id):
+    """
+    A CLI command to add a role to an existing user.
+    
+    Parameters:
+        role_id,
+        user_id
+    """
+    user = User.get_or_404(user_id)
+    role = Role.query.get(role_id)
+
+    if role not in user.roles:
+        user.roles.append(role)
+        db.session.commit()
