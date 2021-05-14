@@ -1,6 +1,6 @@
-from flask import (Blueprint, jsonify, request)
+from flask import (Blueprint, jsonify, request, abort)
 from .extensions import db
-from .models import Book, BookSchema
+from .models import Book, BookSchema, BookUpdateSchema
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from marshmallow import ValidationError
 from .decorators import require_role
@@ -68,6 +68,27 @@ def addBook():
 
     return payload, 201 
 
+@blueprint.route('/book/<id>', methods=['PATCH'])
+@jwt_required()
+@require_role(['Admin'])
+def updateBook(id):
+    book = Book.get_or_404(id)
+    schema = BookUpdateSchema(many=False)
+
+    try:
+        schema.load(request.json)
+    except ValidationError as err:
+        return err.messages, 400
+
+    book.title = request.json['title']
+    book.author = request.json['author']
+    book.pages = request.json['pages']
+    book.isReserved = request.json['isReserved']
+
+    db.session.commit()
+    payload = book_schema.dump(book)
+
+    return payload, 200
 
 
 

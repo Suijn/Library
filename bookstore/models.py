@@ -42,11 +42,19 @@ class Book(db.Model):
 
 class BookSchema(ma.Schema):
     id = fields.Integer()
-    title = fields.Str()
-    author = fields.Str()
+    title = fields.Str(required=True)
+    author = fields.Str(required=True)
     pages = fields.Integer()
     isReserved = fields.Bool()
     user = fields.Nested("UserSchema", only=("id", "email"))
+
+
+class BookUpdateSchema(ma.Schema):
+    title = fields.Str(required=True)
+    author = fields.Str(required=True)
+    pages = fields.Integer(required=True)
+    isReserved = fields.Bool(required=True)
+
 
 
 
