@@ -96,7 +96,8 @@ def updateBook(id):
 @blueprint.route('/registerBook/<id>', methods=['PATCH'])
 @jwt_required()
 @require_role()
-def registerBook(id):
+def reserveBook(id):
+    """Reserve a book for the given user"""
     user_id = get_jwt_identity()
     book = Book.get_or_404(id)
 
@@ -115,8 +116,8 @@ def registerBook(id):
 @blueprint.route('/unregisterBook/<id>', methods=['PATCH'])
 @jwt_required()
 @require_role(['Admin'])
-def unregisterBook(id):
-    """Unregister a book for the given user"""
+def cancelReservation(id):
+    """Cancel reservation of a book for the given user"""
     book = Book.get_or_404(id)
 
     book.user_id = None
