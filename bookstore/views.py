@@ -112,6 +112,22 @@ def registerBook(id):
         raise Exception('Sorry, this book is already reserved!')
 
 
+@blueprint.route('/unregisterBook/<id>', methods=['PATCH'])
+@jwt_required()
+@require_role(['Admin'])
+def unregisterBook(id):
+    """Unregister a book for the given user"""
+    book = Book.get_or_404(id)
+
+    book.user_id = None
+
+    db.session.commit()
+
+    payload = book_schema.dump(book)
+    return payload, 200 
+
+
+
 
 
     
