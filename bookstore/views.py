@@ -4,6 +4,7 @@ from .models import Book, BookSchema, BookUpdateSchema
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from marshmallow import ValidationError
 from .decorators import require_role
+from .users.models import User
 
 blueprint = Blueprint('api', __name__, )
 
@@ -93,7 +94,7 @@ def updateBook(id):
 
 
 
-@blueprint.route('/registerBook/<id>', methods=['PATCH'])
+@blueprint.route('/reserveBook/<id>', methods=['PATCH'])
 @jwt_required()
 @require_role()
 def reserveBook(id):
@@ -113,19 +114,47 @@ def reserveBook(id):
         raise Exception('Sorry, this book is already reserved!')
 
 
-@blueprint.route('/unregisterBook/<id>', methods=['PATCH'])
+@blueprint.route('/cancelResBook/<id>', methods=['PATCH'])
 @jwt_required()
 @require_role(['Admin'])
 def cancelReservation(id):
     """Cancel reservation of a book for the given user"""
     book = Book.get_or_404(id)
 
+    book.isReserved = False
     book.user_id = None
 
     db.session.commit()
 
     payload = book_schema.dump(book)
     return payload, 200 
+
+
+@blueprint.route('/admin/reserveBook/<book_id>/<user_id>', methods=['PATCH'])
+@jwt_required()
+@require_role(['Admin'])
+def reserveBookAsAdmin(book_id, user_id):
+    """
+    Reserve a book for a user.
+    
+    :param book_id: The book to reserve. 
+    :param user_id: The user that reserves the book.
+
+    :if selected book is already reserved -- abort.
+    """
+    book = Book.get_or_404(book_id)
+    user = User.get_or_404(user_id)
+
+    if book.isReserved == False and not book.user:
+        book.user_id = user.id
+        book.isReserved = True
+
+        db.session.commit()
+        payload = book_schema.dump(book)
+
+        return payload, 200
+    else:
+        abort(500)
 
 
 
