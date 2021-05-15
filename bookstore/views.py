@@ -1,6 +1,6 @@
 from flask import (Blueprint, jsonify, request, abort)
 from .extensions import db
-from .models import Book, BookSchema, BookUpdateSchema
+from .models import Book, BookSchema, BookUpdateSchema, BookSearchSchema
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from marshmallow import ValidationError
 from .decorators import require_role
@@ -33,6 +33,29 @@ def getBook(id):
 
     return paylaod, 200
 
+@blueprint.route('/books/getBooksBy', methods=['POST'])
+@jwt_required()
+@require_role()
+def getBooksByTitleOrAuthor():
+    """Search for books by title and author."""
+    schema = BookSearchSchema()
+
+    try:
+        schema.load(request.json)
+    except ValidationError as err:
+        return err.messages, 400
+    
+    book_title = "%{}%".format(request.json['title'])
+    book_author = "%{}%".format(request.json['author'])
+
+    books = Book.query.filter(
+        Book.title.like(book_title), 
+        Book.author.like(book_author)
+    ).all()
+
+    payload = books_schema.dump(books)
+    return jsonify(payload), 200
+    
 
 @blueprint.route('/book/<id>', methods=['DELETE'])
 @jwt_required()

@@ -55,6 +55,22 @@ class BookUpdateSchema(ma.Schema):
     pages = fields.Integer(required=True)
     isReserved = fields.Bool(required=True)
 
+class BookSearchSchema(ma.Schema):
+    """A schema to search for books."""
+    title = fields.Str()
+    author = fields.Str()
+
+    @validates_schema
+    def validateAtLeastOneFieldPresent(self, data, **kwargs):
+        '''Validates there is at least one field filled.'''
+
+        if "title" not in data and "author" not in data:
+            raise ValidationError("No title or author.")
+        if data["title"].isspace() and data["author"].isspace():
+            raise ValidationError("No title or author.")
+        if not data["title"] and not data["author"]:
+            raise ValidationError("No title or author.")
+
 
 
 
