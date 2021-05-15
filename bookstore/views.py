@@ -17,7 +17,6 @@ books_schema = BookSchema(many=True)
 @require_role()
 def getBooks():
     books = Book.query.all()
-
     payload = books_schema.dump(books)
 
     return jsonify(payload), 200
@@ -28,10 +27,9 @@ def getBooks():
 @require_role()
 def getBook(id):
     book = Book.get_or_404(id)
+    payload = book_schema.dump(book)
 
-    paylaod = book_schema.dump(book)
-
-    return paylaod, 200
+    return payload, 200
 
 @blueprint.route('/books/search', methods=['POST'])
 @jwt_required()
@@ -94,12 +92,10 @@ def searchForBooksAdmin():
 def deleteBook(id):
     book = Book.get_or_404(id)
 
-    payload = book_schema.dump(book)
-
     db.session.delete(book)
     db.session.commit()
 
-    return payload, 200
+    return '', 204
 
 
 @blueprint.route('/book', methods=['POST'])
@@ -148,7 +144,7 @@ def updateBook(id):
 
 
 
-@blueprint.route('/reserveBook/<id>', methods=['PATCH'])
+@blueprint.route('/reserveBook/<id>', methods=['POST'])
 @jwt_required()
 @require_role()
 def reserveBook(id):
@@ -165,18 +161,10 @@ def reserveBook(id):
 
         db.session.add(reservation)
         db.session.commit()
-
-
-    # if book.isReserved == False or not book.user:
-    #     book.user_id = user_id
-    #     book.isReserved = True
-
-    #     db.session.commit()
-
-    #     payload = book_schema.jsonify(book)
-    #     return payload, 200
-    # else:
-    #     raise Exception('Sorry, this book is already reserved!')
+        
+        return '', 204
+    else:
+        abort(500)
 
 
 @blueprint.route('/cancelResBook/<id>', methods=['PATCH'])

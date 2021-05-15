@@ -1,9 +1,11 @@
+from sqlalchemy.sql.operators import nullsfirst_op
 from .extensions import db, ma
 from sqlalchemy.orm import backref, relationship
 from marshmallow import Schema, fields, validates, ValidationError,validates_schema
 from flask import abort
 import datetime
 from datetime import date
+from sqlalchemy import CheckConstraint
 
 def calculate_end_date(start_date):
     """Calculate the date until which the book has to be returned."""
@@ -50,13 +52,18 @@ class Book(db.Model):
 
 
 class Reservation(db.Model):
-    """A reservation model to store information about book reservations."""
+    """A reservation model to store information about books reservations."""
     __tablename__ = 'reservations'
+    __table_args__ = (
+        CheckConstraint("status IN ('STARTED', 'FINISHED')"),
+    )
     id = db.Column(db.Integer, primary_key=True)
     book_id = db.Column(db.Integer, db.ForeignKey('books.id'), nullable=False)
     reserved_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    status = db.Column('status', db.String, default='STARTED', nullable=False)
     start_date = db.Column(db.Date, default=date.today(), nullable=False)
-    end_date = db.Column(db.Date, default=calculate_end_date(date.today()), nullable=False)
+    expected_end_date = db.Column(db.Date, default=calculate_end_date(date.today()), nullable=False)
+    actual_end_date = db.Column(db.Date, default=None, nullable=True)
 
 
 class BookSchema(ma.Schema):

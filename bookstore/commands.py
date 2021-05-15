@@ -22,10 +22,13 @@ def create_admin_user(email, password):
     #Create Admin and User roles if not found.
     try:
         admin_role = Role.query.filter_by(name='Admin').one()
-        user_role = Role.query.filter_by(name='User').one()
     except NoResultFound as err:
         admin_role = Role('Admin')
-        user_role = Role('User')
+
+    try:
+        user_role = Role.query.filter_by(name='User').one()
+    except NoResultFound as err:
+        user_role = Role('User')    
     
     admin.roles.append(admin_role)
     admin.roles.append(user_role)
