@@ -64,6 +64,7 @@ class Reservation(db.Model):
     start_date = db.Column(db.Date, default=date.today(), nullable=False)
     expected_end_date = db.Column(db.Date, default=calculate_end_date(date.today()), nullable=False)
     actual_end_date = db.Column(db.Date, default=None, nullable=True)
+    was_prolonged = db.Column(db.Boolean, default=False, nullable=False)
 
 
 class BookSchema(ma.Schema):
