@@ -1,6 +1,6 @@
 from flask import (Blueprint, jsonify, request, abort)
 from .extensions import db
-from .models import Book, BookSchema, BookUpdateSchema, BookSearchSchema
+from .models import Book, BookSchema, BookUpdateSchema, BookSearchSchema, BookSearchSchemaAdmin
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from marshmallow import ValidationError
 from .decorators import require_role
@@ -33,10 +33,10 @@ def getBook(id):
 
     return paylaod, 200
 
-@blueprint.route('/books/getBooksBy', methods=['POST'])
+@blueprint.route('/books/search', methods=['POST'])
 @jwt_required()
 @require_role()
-def getBooksByTitleOrAuthor():
+def searchForBooks():
     """Search for books by title and author."""
     schema = BookSearchSchema()
 
@@ -45,6 +45,37 @@ def getBooksByTitleOrAuthor():
     except ValidationError as err:
         return err.messages, 400
     
+    book_title = "%{}%".format(request.json['title'])
+    book_author = "%{}%".format(request.json['author'])
+
+    books = Book.query.filter(
+        Book.title.like(book_title), 
+        Book.author.like(book_author)
+    ).all()
+
+    payload = books_schema.dump(books)
+    return jsonify(payload), 200
+
+@blueprint.route('/admin/books/search', methods=['POST'])
+@jwt_required()
+@require_role(['Admin'])
+def searchForBooksAdmin():
+    """Search book endpoint for admin users."""
+    schema = BookSearchSchemaAdmin()
+
+    try:
+        schema.load(request.json)
+    except ValidationError as err:
+        return err.messages, 400
+    
+    #If id is filled, then the search function returns the book with the given id.
+    if request.json['id']: #Returns False if id is empty.
+        book_id = int(request.json['id'])
+        book = Book.get_or_404(book_id)
+        payload = book_schema.dump(book)
+        return payload, 200
+    
+    #If id is empty, then the search proceeds with the other parameters. 
     book_title = "%{}%".format(request.json['title'])
     book_author = "%{}%".format(request.json['author'])
 
@@ -75,13 +106,13 @@ def deleteBook(id):
 @jwt_required()
 @require_role(['Admin'])
 def addBook():
-    title = request.json['title'] 
-    author = request.json['author']
-
     try:
         book_schema.load(request.json)
     except ValidationError as err:
         return err.messages, 400
+
+    title = request.json['title'] 
+    author = request.json['author']
 
     book = Book(title, author)
     

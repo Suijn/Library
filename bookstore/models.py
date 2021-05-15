@@ -57,8 +57,8 @@ class BookUpdateSchema(ma.Schema):
 
 class BookSearchSchema(ma.Schema):
     """A schema to search for books."""
-    title = fields.Str()
-    author = fields.Str()
+    title = fields.Str(required=True)
+    author = fields.Str(required=True)
 
     @validates_schema
     def validateAtLeastOneFieldPresent(self, data, **kwargs):
@@ -70,6 +70,23 @@ class BookSearchSchema(ma.Schema):
             raise ValidationError("No title or author.")
         if not data["title"] and not data["author"]:
             raise ValidationError("No title or author.")
+
+class BookSearchSchemaAdmin(ma.Schema):
+    """A schema to search for books."""
+    id = fields.Str(required=True)
+    title = fields.Str(required=True)
+    author = fields.Str(required=True)
+
+    @validates_schema
+    def validateAtLeastOneFieldPresent(self, data, **kwargs):
+        '''Validates there is at least one field filled.'''
+
+        if "id" not in data and "title" not in data and "author" not in data:
+            raise ValidationError("No id, title or author.")
+        if not data["id"] and data["title"].isspace() and data["author"].isspace():
+            raise ValidationError("No id, title or author.")
+        if not data["id"] and not data["title"] and not data["author"]:
+            raise ValidationError("No id, title or author.")
 
 
 
