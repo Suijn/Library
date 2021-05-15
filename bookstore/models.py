@@ -1,7 +1,16 @@
 from .extensions import db, ma
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import backref, relationship
 from marshmallow import Schema, fields, validates, ValidationError,validates_schema
 from flask import abort
+import datetime
+from datetime import date
+
+def calculate_end_date(start_date):
+    """Calculate the date until which the book has to be returned."""
+    delta = datetime.timedelta(days=30)
+    end_date = start_date + delta
+    return end_date
+
 
 class Book(db.Model):
     __tablename__ = 'books'
@@ -10,9 +19,9 @@ class Book(db.Model):
     author = db.Column(db.String(), nullable=False)
     pages = db.Column(db.Integer, nullable=True)
     isReserved = db.Column(db.Boolean, default=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    user = db.relationship("User", back_populates='books')
-
+    # user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    # user = db.relationship("User", back_populates='books')
+    reservation = db.relationship('Reservation', backref='book')
 
     def __repr__(self):
         return f'{self.__class__}'
@@ -38,6 +47,16 @@ class Book(db.Model):
     def __init__(self, title, author):
         self.title = title
         self.author = author
+
+
+class Reservation(db.Model):
+    """A reservation model to store information about book reservations."""
+    __tablename__ = 'reservations'
+    id = db.Column(db.Integer, primary_key=True)
+    book_id = db.Column(db.Integer, db.ForeignKey('books.id'), nullable=False)
+    reserved_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    start_date = db.Column(db.Date, default=date.today(), nullable=False)
+    end_date = db.Column(db.Date, default=calculate_end_date(date.today()), nullable=False)
 
 
 class BookSchema(ma.Schema):

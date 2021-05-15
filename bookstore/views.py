@@ -1,6 +1,6 @@
 from flask import (Blueprint, jsonify, request, abort)
 from .extensions import db
-from .models import Book, BookSchema, BookUpdateSchema, BookSearchSchema, BookSearchSchemaAdmin
+from .models import Book, BookSchema, BookUpdateSchema, BookSearchSchema, BookSearchSchemaAdmin, Reservation
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from marshmallow import ValidationError
 from .decorators import require_role
@@ -75,7 +75,7 @@ def searchForBooksAdmin():
         payload = book_schema.dump(book)
         return payload, 200
     
-    #If id is empty, then the search proceeds with the other parameters. 
+    #If id is empty, then the search proceeds with the other attributes. 
     book_title = "%{}%".format(request.json['title'])
     book_author = "%{}%".format(request.json['author'])
 
@@ -156,16 +156,27 @@ def reserveBook(id):
     user_id = get_jwt_identity()
     book = Book.get_or_404(id)
 
-    if book.isReserved == False or not book.user:
-        book.user_id = user_id
+    if book.isReserved == False:
         book.isReserved = True
 
+        reservation = Reservation()
+        reservation.reserved_by = user_id
+        reservation.book = book
+
+        db.session.add(reservation)
         db.session.commit()
 
-        payload = book_schema.jsonify(book)
-        return payload, 200
-    else:
-        raise Exception('Sorry, this book is already reserved!')
+
+    # if book.isReserved == False or not book.user:
+    #     book.user_id = user_id
+    #     book.isReserved = True
+
+    #     db.session.commit()
+
+    #     payload = book_schema.jsonify(book)
+    #     return payload, 200
+    # else:
+    #     raise Exception('Sorry, this book is already reserved!')
 
 
 @blueprint.route('/cancelResBook/<id>', methods=['PATCH'])
