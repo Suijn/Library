@@ -1,4 +1,5 @@
 from flask import (Blueprint, jsonify, request, abort)
+from flask_jwt_extended.utils import get_current_user
 from .extensions import db
 from .models import Book, BookSchema, BookUpdateSchema, BookSearchSchema, BookSearchSchemaAdmin, Reservation
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -6,6 +7,8 @@ from marshmallow import ValidationError
 from .decorators import didReserveBook, require_role
 from .users.models import User
 from datetime import date
+import datetime
+from sqlalchemy.exc import NoResultFound
 
 blueprint = Blueprint('api', __name__, )
 
@@ -243,18 +246,40 @@ def reserveBookAsAdmin(book_id, user_id):
         abort(400, 'This book is already reserved.')
 
 
-@blueprint.route('/prolongBook', methods=['POST'])
+@blueprint.route('/prolongBook/<book_id>', methods=['PATCH'])
 @jwt_required()
-@require_role(['Admin'])
+@require_role()
 @didReserveBook()
-def prolong_book():
+def prolong_book(book_id):
     """
     Prolong the book reservation.
 
-    :param book_id: The book to prolong the reservation for.
-    :permission: Only the user that reserved the book can ask for the prolongment.
+    A book reservation can be prolonged only once for the duration of 30 days.
+    
+    :param book_id: The book the user wants to prolong the reservation for.
+
+    :permission require_role: Requires a role passed in parameter to access this resource.
+    :permission didReserveBook: Only the user that reserved the book can ask for the prolongment.
     """
 
-    #Load schema (book id , user id )
+    current_user = User.get_or_404(get_jwt_identity())
 
-    return 'ok', 200
+    try:
+        reservation = Reservation.query.filter(
+            Reservation.reserved_by == current_user.id,
+            Reservation.book_id == book_id,
+            Reservation.status == 'STARTED'
+        ).one()
+    except NoResultFound:
+        abort(401)
+    
+    if reservation.was_prolonged == False:
+        delta = datetime.timedelta(days=30)
+        reservation.expected_end_date += delta
+        reservation.was_prolonged = True
+
+        db.session.commit()
+    else:
+        abort(401, 'You have already prolonged the book reservation!')
+
+    return '', 204

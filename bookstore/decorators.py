@@ -4,8 +4,14 @@ from .users.models import User
 from flask import abort, request
 from .models import Book, Reservation
 from sqlalchemy.exc import NoResultFound
+from marshmallow import ValidationError
 
 def require_role(roles=["User"]):
+    """
+    A permission decorator to check whether the user is authorized to access a resource.
+
+    :param roles: A list of roles. Defaults to 'User'.
+    """
     def wrapper(func):
         @wraps(func)
         def decorator(*args, **kwargs):
@@ -54,24 +60,17 @@ def isOwner():
 
 def didReserveBook():
     """
-    A permission decorator to check whether the user reserved the book.
-
-    Scans the request for the book and user data. 
+    A permission decorator to check whether the current user reserved the book.
     """
     def wrapper(func):
         @wraps(func)
         def decorator(*args, **kwargs):
-            data = request.get_json()
-            if not data or 'book_id' not in data or 'user_id' not in data:
-                abort(400)
-
-            book = Book.get_or_404(data['book_id'])
-            user = User.get_or_404(data['user_id'])
+            current_user = User.get_or_404(get_jwt_identity())
 
             try:
                 reservation = Reservation.query.filter(
-                    Reservation.reserved_by == user.id,
-                    Reservation.book_id == book.id,
+                    Reservation.reserved_by == current_user.id,
+                    Reservation.book_id == kwargs['book_id'],
                     Reservation.status == 'STARTED'
                 ).one()
             except NoResultFound:

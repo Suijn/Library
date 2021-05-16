@@ -117,4 +117,3 @@ class BookSearchSchemaAdmin(ma.Schema):
 
 
 
-
