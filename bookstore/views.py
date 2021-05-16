@@ -35,28 +35,6 @@ def getBook(id):
 
     return payload, 200
 
-@blueprint.route('/books/search', methods=['POST'])
-@jwt_required()
-@require_role()
-def searchForBooks():
-    """Search for books by title and author."""
-    schema = BookSearchSchema()
-
-    try:
-        schema.load(request.json)
-    except ValidationError as err:
-        return err.messages, 400
-    
-    book_title = "%{}%".format(request.json['title'])
-    book_author = "%{}%".format(request.json['author'])
-
-    books = Book.query.filter(
-        Book.title.like(book_title), 
-        Book.author.like(book_author)
-    ).all()
-
-    payload = books_schema.dump(books)
-    return jsonify(payload), 200
 
 @blueprint.route('/admin/books/search', methods=['POST'])
 @jwt_required()
