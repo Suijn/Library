@@ -3,7 +3,7 @@ from .extensions import db
 from .models import Book, BookSchema, BookUpdateSchema, BookSearchSchema, BookSearchSchemaAdmin, Reservation
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from marshmallow import ValidationError
-from .decorators import require_role
+from .decorators import didReserveBook, require_role
 from .users.models import User
 from datetime import date
 
@@ -180,7 +180,11 @@ def reserveBook(id):
 @jwt_required()
 @require_role(['Admin'])
 def cancelReservation(book_id):
-    """Cancel reservation of a book for the given user."""
+    """
+    Cancel reservation of a book for the given user.
+    
+    :param book_id: The book which reservation is to be cancelled.
+    """
     book = Book.get_or_404(book_id)
 
     #Get reservation of the book.
@@ -205,7 +209,7 @@ def cancelReservation(book_id):
     return '', 204 
 
 
-@blueprint.route('/admin/reserveBook/<book_id>/<user_id>', methods=['PATCH'])
+@blueprint.route('/admin/reserveBook/<book_id>/<user_id>', methods=['POST'])
 @jwt_required()
 @require_role(['Admin'])
 def reserveBookAsAdmin(book_id, user_id):
@@ -239,21 +243,18 @@ def reserveBookAsAdmin(book_id, user_id):
         abort(400, 'This book is already reserved.')
 
 
+@blueprint.route('/prolongBook', methods=['POST'])
+@jwt_required()
+@require_role(['Admin'])
+@didReserveBook()
+def prolong_book():
+    """
+    Prolong the book reservation.
 
+    :param book_id: The book to prolong the reservation for.
+    :permission: Only the user that reserved the book can ask for the prolongment.
+    """
 
+    #Load schema (book id , user id )
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    return 'ok', 200
