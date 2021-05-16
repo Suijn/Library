@@ -1,6 +1,6 @@
 """Models module."""
 from ..extensions import db, ma
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import load_only, relationship
 from ..extensions import (bcrypt)
 from marshmallow import Schema, fields, validates, ValidationError,validates_schema
 from ..models import BookSchema
@@ -16,7 +16,6 @@ association_table = db.Table('roles_users',
 
 class Role(db.Model):
     """A role for users."""
-
     __tablename__ = 'roles'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(), unique=True, nullable=False)
@@ -91,9 +90,9 @@ class User(db.Model):
 
 
 class RegisterSchema(ma.Schema):
-    email = fields.Email(required=True)
-    password = fields.Str(required=True)
-    password_confirmation = fields.Str(required=True)
+    email = fields.Email(required=True, load_only=True)
+    password = fields.Str(required=True, load_only=True)
+    password_confirmation = fields.Str(required=True, load_only=True)
 
     @validates_schema
     def validatePassword(self, data, **kwargs):
@@ -113,8 +112,8 @@ class RegisterSchema(ma.Schema):
 
 
 class LoginSchema(ma.Schema):
-    email = fields.Email()
-    password = fields.Str()
+    email = fields.Email(required=True, load_only=True)
+    password = fields.Str(required=True, load_only=True)
 
     @validates_schema
     def userExistsAndPasswordCorrect(self, data, **kwargs):
@@ -148,8 +147,8 @@ class UserSchema(ma.Schema):
 
 class UpdatePasswordSchema(ma.Schema):
     """Schema to update user password."""
-    password = fields.Str(required=True)
-    password_confirmation = fields.Str(required=True)
+    password = fields.Str(required=True, load_only=True)
+    password_confirmation = fields.Str(required=True, load_only=True)
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user') if 'user' in kwargs else None
