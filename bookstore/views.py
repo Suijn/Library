@@ -175,20 +175,29 @@ def reserveBook(id):
         abort(400, 'This book is already reserved.')
 
 
-@blueprint.route('/cancelResBook/<id>', methods=['PATCH'])
+@blueprint.route('/cancelResBook/<book_id>', methods=['PATCH'])
 @jwt_required()
 @require_role(['Admin'])
-def cancelReservation(id):
-    """Cancel reservation of a book for the given user"""
-    book = Book.get_or_404(id)
+def cancelReservation(book_id):
+    """Cancel reservation of a book for the given user."""
+    book = Book.get_or_404(book_id)
 
+    #Get reservation of the book.
+    reservation = Reservation.query.filter(
+        Reservation.book_id == book.id,
+        Reservation.status == 'STARTED'
+    ).one()
+
+    #Get user and decrement books_amount.
+    #Change reservation status to finished.
+    user = User.get_or_404(reservation.reserved_by)
+    user.books_amount -= 1
     book.isReserved = False
-    book.user_id = None
+    reservation.status = 'FINISHED'
 
     db.session.commit()
 
-    payload = book_schema.dump(book)
-    return payload, 200 
+    return '', 204 
 
 
 @blueprint.route('/admin/reserveBook/<book_id>/<user_id>', methods=['PATCH'])
