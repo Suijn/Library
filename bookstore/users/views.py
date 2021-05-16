@@ -74,7 +74,6 @@ def changeUserEmail(id):
     payload = user_schema.dump(user)
 
     db.session.commit()
-
     return payload, 200
 
 @blueprint.route('/user/changePassword/<id>', methods=['PATCH'])
@@ -103,18 +102,20 @@ def changeUserPassword(id):
     db.session.commit()
     return '', 204
 
+
 @blueprint.route('/register', methods=['POST'])
 def registerUser():
     schema = RegisterSchema()
-    password = request.json['password']
-    email = request.json['email']
 
     try:
         schema.load(request.json)
     except ValidationError as err:
         return err.messages, 400
 
-    #A role is created before first user
+    password = request.json['password']
+    email = request.json['email']
+
+    #A role is created before first user.
     try:
         role = Role.query.filter_by(name='User').one()
     except NoResultFound as err:
@@ -135,15 +136,16 @@ def registerUser():
 @blueprint.route('/login', methods=['POST'])
 def login():
     schema = LoginSchema()
-    email = request.json['email']
-    password = request.json['password']
 
     try:
         schema.load(request.json)
     except ValidationError as err:
         return err.messages
+
+    new_email = request.json['email']
+    password = request.json['password']
     
-    user = User.query.filter_by(email=email).first()
+    user = User.query.filter_by(email=new_email).first()
 
     access_token = create_access_token(identity=user.id)
     refresh_token = create_refresh_token(identity=user.id)
