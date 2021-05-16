@@ -69,12 +69,26 @@ def normal_access_token(client):
     return access_token
 
 
-def test_db(client, admin_access_token):
+def test_getUsers_OK(client, admin_access_token):
     """The database starts with two users in the db (One Admin user and one normal user) """
     response = client.get('/users', headers={'Authorization': 'Bearer ' + admin_access_token})
-    
+
     assert response.status_code == 200
     assert len(response.json) == 2
+
+
+def test_getUsers_401(client, normal_access_token):
+    """Test the getUsers function returns 401 when a normal access token was provided."""
+    response = client.get('/users', headers={'Authorization': 'Bearer ' + normal_access_token})
+
+    assert response.status_code == 401
+
+
+def test_getUsers_401_v2(client):
+    """Test the getUsers function returns 401 when there was no token provided."""
+    response = client.get('/users')
+
+    assert response.status_code == 401
 
 
 def test_getUser_OK(client, admin_access_token):
@@ -96,6 +110,7 @@ def test_getUser_404(client, admin_access_token):
 
     assert response.status_code == 404
 
+
 def test_getUser_401(client, normal_access_token):
     """Test the getUser function returns 401 when a normal user token was provided."""
     response = client.get('/user/1', headers={'Authorization': 'Bearer ' + normal_access_token})
@@ -103,7 +118,7 @@ def test_getUser_401(client, normal_access_token):
     assert response.status_code == 401
 
 
-def test_getUser_401_2(client, normal_access_token):
+def test_getUser_401_2(client):
     """Test the getUser function returns 401 when there was no token provided."""
     response = client.get('/user/1')
 
