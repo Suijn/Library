@@ -8,7 +8,7 @@ from sqlalchemy.exc import NoResultFound
 from ..decorators import require_role, isAdminOrOwner, isOwner
 
 
-blueprint = Blueprint('users', __name__)
+blueprint = Blueprint('auth', __name__)
 
 user_schema = UserSchema()
 users_schema = UserSchema(many=True)

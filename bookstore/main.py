@@ -1,5 +1,4 @@
 from flask import Flask
-from . import views, users
 from .users.models import User
 from .extensions import (
     db,
@@ -9,15 +8,17 @@ from .extensions import (
 )
 import click
 from . import commands
+from . import users
+from . import views
 
 
 def create_app():
     app = Flask(__name__)
 
     app.config.from_object("bookstore.settings")
+    
     register_extensions(app)
     register_blueprints(app)
-
     register_commands(app)
 
     return app
@@ -33,8 +34,9 @@ def register_extensions(app):
 
 
 def register_blueprints(app):
-    app.register_blueprint(views.blueprint)
     app.register_blueprint(users.views.blueprint)
+    app.register_blueprint(views.users.blueprint)
+    app.register_blueprint(views.admins.blueprint)
 
 
 def register_commands(app):

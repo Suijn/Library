@@ -66,6 +66,15 @@ class Reservation(db.Model):
     was_prolonged = db.Column(db.Boolean, default=False, nullable=False)
 
 
+class ReservationSchema(ma.Schema):
+    """A read-only schema for the Reservation model."""
+    book_id = fields.Integer(dump_only=True)
+    status = fields.Str(dump_only=True)
+    start_date = fields.Date(dump_only=True)
+    expected_end_date = fields.Date(dump_only=True)
+    was_prolonged = fields.Bool(dump_only=True)
+
+
 class BookSchema(ma.Schema):
     id = fields.Integer()
     title = fields.Str(required=True)
