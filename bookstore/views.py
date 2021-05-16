@@ -5,6 +5,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from marshmallow import ValidationError
 from .decorators import require_role
 from .users.models import User
+from datetime import date
 
 blueprint = Blueprint('api', __name__, )
 
@@ -189,11 +190,15 @@ def cancelReservation(book_id):
     ).one()
 
     #Get user and decrement books_amount.
-    #Change reservation status to finished.
     user = User.get_or_404(reservation.reserved_by)
     user.books_amount -= 1
+
+    #Change reservation status to finished and book boolean to False.
     book.isReserved = False
     reservation.status = 'FINISHED'
+
+    #Get current date and store it in the database.
+    reservation.actual_end_date = date.today()
 
     db.session.commit()
 
@@ -213,18 +218,25 @@ def reserveBookAsAdmin(book_id, user_id):
     :if selected book is already reserved -- abort.
     """
     book = Book.get_or_404(book_id)
-    user = User.get_or_404(user_id)
+    current_user = User.get_or_404(user_id)
 
-    if book.isReserved == False and not book.user:
-        book.user_id = user.id
-        book.isReserved = True
+    if book.isReserved == False:
+        if current_user.books_amount < 5:
+            current_user.books_amount += 1
+            book.isReserved = True
 
-        db.session.commit()
-        payload = book_schema.dump(book)
+            reservation = Reservation()
+            reservation.user = current_user
+            reservation.book = book
 
-        return payload, 200
+            db.session.add(reservation)
+            db.session.commit()
+            
+            return '', 204
+        else:
+            abort(400, 'User cannot reserve more books.')
     else:
-        abort(500)
+        abort(400, 'This book is already reserved.')
 
 
 
