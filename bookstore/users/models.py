@@ -5,6 +5,7 @@ from ..extensions import (bcrypt)
 from marshmallow import Schema, fields, validates, ValidationError,validates_schema
 from ..models import BookSchema
 from flask import abort
+from sqlalchemy import CheckConstraint
 
 
 # Associate table for users and roles
@@ -35,11 +36,15 @@ class RoleSchema(ma.Schema):
 
 
 class User(db.Model):
+    """A user model."""
     __tablename__ = 'users'
+    __table_args__ = (
+        CheckConstraint("books_amount <= 5"),
+    )
     id = db.Column(db.Integer, primary_key=True)
     password = db.Column(db.LargeBinary(), nullable=False)
     email= db.Column(db.String(), nullable=False, unique=True)
-    # books = db.relationship("Book", back_populates='user')
+    books_amount = db.Column(db.Integer, default=0, nullable=False)
     reservation = db.relationship("Reservation", backref='user')
 
     def __init__(self, password, email):
@@ -76,7 +81,6 @@ class User(db.Model):
             abort(404)
         return user
             
-        
 
     def __repr__(self):
         return f'{self.__class__}'
@@ -128,9 +132,10 @@ class LoginSchema(ma.Schema):
 
 
 class UserSchema(ma.Schema):
+    """A schema for user."""
     id = fields.Integer()
     email = fields.Email()
-    books = fields.Nested("BookSchema", many=True)
+    books_amount = fields.Integer()
     roles = fields.Nested("RoleSchema", many=True)
 
     @validates('email')
@@ -142,7 +147,7 @@ class UserSchema(ma.Schema):
             raise ValidationError('Provided email is already in use!')
 
 class UpdatePasswordSchema(ma.Schema):
-    """Schema to update user password"""
+    """Schema to update user password."""
     password = fields.Str(required=True)
     password_confirmation = fields.Str(required=True)
 

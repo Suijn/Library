@@ -15,14 +15,13 @@ def calculate_end_date(start_date):
 
 
 class Book(db.Model):
+    """A book model."""
     __tablename__ = 'books'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(), nullable=False)
     author = db.Column(db.String(), nullable=False)
     pages = db.Column(db.Integer, nullable=True)
     isReserved = db.Column(db.Boolean, default=False)
-    # user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    # user = db.relationship("User", back_populates='books')
     reservation = db.relationship('Reservation', backref='book')
 
     def __repr__(self):
@@ -81,6 +80,7 @@ class BookUpdateSchema(ma.Schema):
     author = fields.Str(required=True)
     pages = fields.Integer(required=True)
     isReserved = fields.Bool(required=True)
+
 
 class BookSearchSchema(ma.Schema):
     """A schema to search for books."""

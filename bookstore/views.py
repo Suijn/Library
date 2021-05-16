@@ -148,23 +148,31 @@ def updateBook(id):
 @jwt_required()
 @require_role()
 def reserveBook(id):
-    """Reserve a book for the given user"""
-    user_id = get_jwt_identity()
+    """
+    Reserve a book for the given user.
+    
+    A single user can reserve up to 5 books.
+    """
+    current_user = User.get_or_404(get_jwt_identity())
     book = Book.get_or_404(id)
 
     if book.isReserved == False:
-        book.isReserved = True
+        if current_user.books_amount < 5:
+            current_user.books_amount += 1
+            book.isReserved = True
 
-        reservation = Reservation()
-        reservation.reserved_by = user_id
-        reservation.book = book
+            reservation = Reservation()
+            reservation.user = current_user
+            reservation.book = book
 
-        db.session.add(reservation)
-        db.session.commit()
-        
-        return '', 204
+            db.session.add(reservation)
+            db.session.commit()
+            
+            return '', 204
+        else:
+            abort(400, 'You cannot reserve more books.')
     else:
-        abort(500)
+        abort(400, 'This book is already reserved.')
 
 
 @blueprint.route('/cancelResBook/<id>', methods=['PATCH'])
