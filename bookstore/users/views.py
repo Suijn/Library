@@ -19,6 +19,7 @@ users_schema = UserSchema(many=True)
 def getUsers():
     users = User.query.all()
     payload = users_schema.dump(users)
+
     return jsonify(payload), 200
 
 
@@ -29,7 +30,7 @@ def getUser(id):
     user = User.get_or_404(id)
     payload = user_schema.dump(user)
 
-    return payload, 200
+    return jsonify(payload), 200
 
 
 @blueprint.route('/user/<id>', methods=['DELETE'])

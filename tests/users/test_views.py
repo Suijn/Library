@@ -167,3 +167,106 @@ def test_removeUser_401_No_Token(client):
 
     assert response.status_code == 401
 
+
+def test_changeUserEmail_OK(client, normal_access_token):
+    """Test the changeUserEmail function returns 200 and a proper json response."""
+
+    payload = json.dumps({
+        "email": "usermail@test.com",
+    })
+
+    response = client.patch(
+        '/user/changeEmail/2',
+        headers = {
+            'Authorization': 'Bearer ' + normal_access_token,
+            'Content-Type':'application/json',
+        },
+        data=payload
+    )
+
+    assert response.status_code == 200
+    assert response.content_type == 'application/json'
+    assert 'email' in response.json
+
+
+def test_changeUserEmail_Admin_OK(client, admin_access_token):
+    """
+    Test the changeUserEmail function returns 200 and a proper json response
+    when used by an admin.
+    """
+    payload = json.dumps({
+        "email": "usermail@test.com",
+    })
+
+    response = client.patch(
+        '/user/changeEmail/2',
+        headers = {
+            'Authorization': 'Bearer ' + admin_access_token,
+            'Content-Type':'application/json',
+        },
+        data=payload
+    )
+
+    assert response.status_code == 200
+    assert response.content_type == 'application/json'
+    assert 'email' in response.json
+
+
+def test_changeUserEmail_400_Invalid_Mail(client, normal_access_token):
+    """Test the changeUserEmail function returns 400 if an invalid user email was provided."""
+
+    payload = json.dumps({
+        "email": "usermail@.com",
+    })
+
+    response = client.patch(
+        '/user/changeEmail/2',
+        headers = {
+            'Authorization': 'Bearer ' + normal_access_token,
+            'Content-Type':'application/json',
+        },
+        data=payload
+    )
+
+    assert response.status_code == 400
+
+
+def test_changeUserEmail_400_Email_The_Same(client, normal_access_token):
+    """Test the changeUserEmail function returns 400 if provided email was the same as the previous one."""
+
+    payload = json.dumps({
+        "email": "user@test.com",
+    })
+
+    response = client.patch(
+        '/user/changeEmail/2',
+        headers = {
+            'Authorization': 'Bearer ' + normal_access_token,
+            'Content-Type':'application/json',
+        },
+        data=payload
+    )
+
+    assert response.status_code == 400
+
+
+def test_changeUserEmail_401_User_Must_Be_Owner(client, normal_access_token):
+    """Test the changeUserEmail function returns 401 if user is not the owner of the account."""
+
+    payload = json.dumps({
+        "email": "usermail@test.com",
+    })
+
+    response = client.patch(
+        '/user/changeEmail/1',
+        headers = {
+            'Authorization': 'Bearer ' + normal_access_token,
+            'Content-Type':'application/json',
+        },
+        data=payload
+    )
+
+    assert response.status_code == 401
+
+
+
