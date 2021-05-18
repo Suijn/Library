@@ -3,7 +3,6 @@ import tempfile
 import pytest
 from bookstore.main import create_app, db as database
 import json
-
 from bookstore.users.models import User, Role
 
 
@@ -38,6 +37,7 @@ def client():
 
         yield client
     
+    #Db teardown.
     os.close(db)
     os.unlink(db_path)
 
@@ -269,4 +269,124 @@ def test_changeUserEmail_401_User_Must_Be_Owner(client, normal_access_token):
     assert response.status_code == 401
 
 
+def test_changeUserPassword_OK(client, normal_access_token):
+    """Test the changeUserPassword function returns 204 and no json response."""
+
+    payload = json.dumps({
+        "password": 'newpassword',
+        "password_confirmation": 'newpassword'
+    })
+
+    response = client.patch(
+        '/user/changePassword/2',
+        headers = {
+            'Authorization': 'Bearer ' + normal_access_token,
+            'Content-Type':'application/json',
+        },
+        data=payload
+    )
+    
+    assert response.status_code == 204
+    assert not response.json
+
+
+def test_changeUserPassword_401_No_Token(client):
+    """Test the changeUserPassword function returns 401 if no token was provided."""
+
+    payload = json.dumps({
+        "password": 'newpassword',
+        "password_confirmation": 'newpassword'
+    })
+
+    response = client.patch(
+        '/user/changePassword/2',
+        headers = {
+            'Content-Type':'application/json',
+        },
+        data=payload
+    )
+    
+    assert response.status_code == 401
+
+
+def test_changeUserPassowrd_401_Invalid_Token(client, admin_access_token):
+    """Test the changeUserPassword function returns 401 if token is invalid."""
+
+    payload = json.dumps({
+        "password": 'newpassword',
+        "password_confirmation": 'newpassword'
+    })
+
+    response = client.patch(
+        '/user/changePassword/2',
+        headers = {
+            'Content-Type':'application/json',
+            'Authorization': 'Bearer ' + admin_access_token,
+        },
+        data=payload
+    )
+    
+    assert response.status_code == 401
+
+
+def test_changeUserPassword_400_Passwords_Must_Match(client, normal_access_token):
+    """Test the changeUserPassword function returns 400 if password didn't match."""
+
+    payload = json.dumps({
+        "password": 'newpassword',
+        "password_confirmation": 'xyz'
+    })
+
+    response = client.patch(
+        '/user/changePassword/2',
+        headers = {
+            'Content-Type':'application/json',
+            'Authorization': 'Bearer ' + normal_access_token,
+        },
+        data=payload
+    )
+    
+    assert response.status_code == 400
+    assert '_schema' in response.json
+
+
+def test_changeUserPassword_401_User_Not_Owner(client, normal_access_token):
+    """Test the changeUserPassword function returns 401 if user is not an owner of the account."""
+
+    payload = json.dumps({
+        "password": 'newpassword',
+        "password_confirmation": 'newpassword'
+    })
+
+    response = client.patch(
+        '/user/changePassword/1',
+        headers = {
+            'Content-Type':'application/json',
+            'Authorization': 'Bearer ' + normal_access_token,
+        },
+        data=payload
+    )
+    
+    assert response.status_code == 401
+
+
+def test_changeUserPassword_400_Password_The_Same(client, normal_access_token):
+    """Test the changeUserPassword function returns status 400 and errors, if the new password is the same as the previous one."""
+
+    payload = json.dumps({
+        "password": 'password',
+        "password_confirmation": 'password'
+    })
+
+    response = client.patch(
+        '/user/changePassword/2',
+        headers = {
+            'Content-Type':'application/json',
+            'Authorization': 'Bearer ' + normal_access_token,
+        },
+        data=payload
+    )
+    
+    assert response.status_code == 400
+    assert '_schema' in response.json
 
