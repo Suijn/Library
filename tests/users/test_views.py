@@ -123,3 +123,47 @@ def test_getUser_401_No_Token(client):
     response = client.get('/user/1')
 
     assert response.status_code == 401
+
+
+def test_removeUser_OK(client, admin_access_token):
+    """Test the removeUser function returns 204 and the json response is None."""
+    response = client.delete(
+        '/user/2',
+        headers = {
+            'Authorization': 'Bearer ' + admin_access_token
+        }
+    )
+
+    assert response.status_code == 204
+    assert not response.json
+
+
+def test_removeUser_404_Nonexistent_User(client, admin_access_token):
+    """Test the removeUser function returns 404 when user does not exists."""
+    response = client.delete(
+        '/user/1000',
+        headers = {
+            'Authorization': 'Bearer ' + admin_access_token
+        }
+    )
+
+    assert response.status_code == 404
+
+
+def test_removeUser_401_Invalid_Token_Type(client, normal_access_token):
+    """Test the removeUser function returns 401 if a normal access token is provided."""
+    response = client.delete(
+        '/user/2',
+        headers = {
+            'Authorization': 'Bearer ' + normal_access_token
+        }
+    )
+    assert response.status_code == 401
+
+
+def test_removeUser_401_No_Token(client):
+    """Test the removeUser function returs 401 if there was no token provided."""
+    response = client.delete('/user/2')
+
+    assert response.status_code == 401
+

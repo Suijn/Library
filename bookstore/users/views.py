@@ -38,12 +38,10 @@ def getUser(id):
 def removeUser(id):
     user = User.get_or_404(id)
 
-    payload = user_schema.dump(user)
-
     db.session.delete(user)
     db.session.commit()
 
-    return payload, 200
+    return '', 204
 
 
 @blueprint.route('/user/changeEmail/<id>', methods=['PATCH'])
