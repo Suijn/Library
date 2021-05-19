@@ -70,6 +70,7 @@ def test_removeUser_OK(client, admin_access_token):
 
     assert response.status_code == 204
     assert not response.json
+    assert not User.query.get(2)
 
 
 def test_removeUser_404_Nonexistent_User(client, admin_access_token):
@@ -82,28 +83,41 @@ def test_removeUser_404_Nonexistent_User(client, admin_access_token):
     )
 
     assert response.status_code == 404
+    assert not User.query.get(1000)
 
 
 def test_removeUser_401_Invalid_Token_Type(client, normal_access_token):
-    """Test the removeUser function returns 401 if a normal access token is provided."""
+    """
+    Test the removeUser function returns 401 if a normal access token is provided. 
+    Assert the user is still in the database.
+    """
     response = client.delete(
         '/user/2',
         headers = {
             'Authorization': 'Bearer ' + normal_access_token
         }
     )
+
     assert response.status_code == 401
+    assert User.query.get(2)
 
 
 def test_removeUser_401_No_Token(client):
-    """Test the removeUser function returs 401 if there was no token provided."""
+    """
+    Test the removeUser function returs 401 if there was no token provided.
+    Assert the user is still in the database.
+    """
     response = client.delete('/user/2')
 
     assert response.status_code == 401
+    assert User.query.get(2)
 
 
 def test_changeUserEmail_OK(client, normal_access_token):
-    """Test the changeUserEmail function returns 200 and a proper json response."""
+    """
+    Test the changeUserEmail function returns 200 and a proper json response.
+    Assert returned email address is the same as payload.
+    """
 
     payload = json.dumps({
         "email": "usermail@test.com",
@@ -121,12 +135,15 @@ def test_changeUserEmail_OK(client, normal_access_token):
     assert response.status_code == 200
     assert response.content_type == 'application/json'
     assert 'email' in response.json
+    assert response.json['email'] == 'usermail@test.com'
 
 
 def test_changeUserEmail_Admin_OK(client, admin_access_token):
     """
     Test the changeUserEmail function returns 200 and a proper json response
     when used by an admin.
+
+    :assert: the returned email address is the same as email in the payload.
     """
     payload = json.dumps({
         "email": "usermail@test.com",
@@ -144,10 +161,15 @@ def test_changeUserEmail_Admin_OK(client, admin_access_token):
     assert response.status_code == 200
     assert response.content_type == 'application/json'
     assert 'email' in response.json
+    assert response.json['email'] == 'usermail@test.com'
 
 
 def test_changeUserEmail_400_Invalid_Mail(client, normal_access_token):
-    """Test the changeUserEmail function returns 400 if an invalid user email was provided."""
+    """
+    Test the changeUserEmail function returns 400 if an invalid user email was provided.
+    
+    :assert: Email was not changed.
+    """
 
     payload = json.dumps({
         "email": "usermail@.com",
@@ -163,6 +185,7 @@ def test_changeUserEmail_400_Invalid_Mail(client, normal_access_token):
     )
 
     assert response.status_code == 400
+    assert User.query.get(2).email != "usermail@.com"
 
 
 def test_changeUserEmail_400_Email_The_Same(client, normal_access_token):
@@ -185,7 +208,11 @@ def test_changeUserEmail_400_Email_The_Same(client, normal_access_token):
 
 
 def test_changeUserEmail_401_User_Must_Be_Owner(client, normal_access_token):
-    """Test the changeUserEmail function returns 401 if user is not the owner of the account."""
+    """
+    Test the changeUserEmail function returns 401 if user is not the owner of the account.
+    
+    :assert" Email was not changed.
+    """
 
     payload = json.dumps({
         "email": "usermail@test.com",
@@ -201,10 +228,15 @@ def test_changeUserEmail_401_User_Must_Be_Owner(client, normal_access_token):
     )
 
     assert response.status_code == 401
+    assert User.query.get(1).email != "usermail@test.com"
 
 
 def test_changeUserPassword_OK(client, normal_access_token):
-    """Test the changeUserPassword function returns 204 and no json response."""
+    """
+    Test the changeUserPassword function returns 204 and no json response.
+    
+    :assert: Password was changed.
+    """
 
     payload = json.dumps({
         "password": 'newpassword',
@@ -222,10 +254,15 @@ def test_changeUserPassword_OK(client, normal_access_token):
     
     assert response.status_code == 204
     assert not response.json
+    assert User.query.get(2).check_password('newpassword')
 
 
 def test_changeUserPassword_401_No_Token(client):
-    """Test the changeUserPassword function returns 401 if no token was provided."""
+    """
+    Test the changeUserPassword function returns 401 if no token was provided.
+    
+    :assert: Password was not changed.
+    """
 
     payload = json.dumps({
         "password": 'newpassword',
@@ -241,15 +278,20 @@ def test_changeUserPassword_401_No_Token(client):
     )
     
     assert response.status_code == 401
+    assert not User.query.get(2).check_password('newpassword')
 
 
 def test_changeUserPassowrd_401_Invalid_Token(client, admin_access_token):
-    """Test the changeUserPassword function returns 401 if token is invalid."""
+    """
+    Test the changeUserPassword function returns 401 if token is invalid.
+    
+    :assert: Password was not changed.
+    """
 
-    payload = json.dumps({
+    payload = {
         "password": 'newpassword',
         "password_confirmation": 'newpassword'
-    })
+    }
 
     response = client.patch(
         '/user/changePassword/2',
@@ -257,19 +299,25 @@ def test_changeUserPassowrd_401_Invalid_Token(client, admin_access_token):
             'Content-Type':'application/json',
             'Authorization': 'Bearer ' + admin_access_token,
         },
-        data=payload
+        data=json.dumps(payload)
     )
     
     assert response.status_code == 401
+    assert not User.query.get(2).check_password(payload['password'])
 
 
 def test_changeUserPassword_400_Passwords_Must_Match(client, normal_access_token):
-    """Test the changeUserPassword function returns 400 if password didn't match."""
+    """
+    Test the changeUserPassword function returns 400 if password didn't match.
+    
+    :assert: json response returns errors.
+    :assert: password was not changed.
+    """
 
-    payload = json.dumps({
+    payload = {
         "password": 'newpassword',
         "password_confirmation": 'xyz'
-    })
+    }
 
     response = client.patch(
         '/user/changePassword/2',
@@ -277,20 +325,25 @@ def test_changeUserPassword_400_Passwords_Must_Match(client, normal_access_token
             'Content-Type':'application/json',
             'Authorization': 'Bearer ' + normal_access_token,
         },
-        data=payload
+        data=json.dumps(payload)
     )
     
     assert response.status_code == 400
     assert '_schema' in response.json
+    assert not User.query.get(2).check_password(payload['password'])
 
 
 def test_changeUserPassword_401_User_Not_Owner(client, normal_access_token):
-    """Test the changeUserPassword function returns 401 if user is not an owner of the account."""
+    """
+    Test the changeUserPassword function returns 401 if user is not an owner of the account.
+    
+    :assert: Password was not changed.
+    """
 
-    payload = json.dumps({
+    payload ={
         "password": 'newpassword',
         "password_confirmation": 'newpassword'
-    })
+    }
 
     response = client.patch(
         '/user/changePassword/1',
@@ -298,14 +351,20 @@ def test_changeUserPassword_401_User_Not_Owner(client, normal_access_token):
             'Content-Type':'application/json',
             'Authorization': 'Bearer ' + normal_access_token,
         },
-        data=payload
+        data=json.dumps(payload)
     )
     
     assert response.status_code == 401
+    assert not User.query.get(1).check_password(payload['password'])
 
 
 def test_changeUserPassword_400_Password_The_Same(client, normal_access_token):
-    """Test the changeUserPassword function returns status 400 and errors, if the new password is the same as the previous one."""
+    """
+    Test the changeUserPassword function returns status 400 and errors, if the new password is the same as the previous one.
+    
+    :assert: response status code is 400.
+    :assert: errors were returned in response.
+    """
 
     payload = json.dumps({
         "password": 'password',

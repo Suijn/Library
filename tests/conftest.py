@@ -1,5 +1,4 @@
 """A file for pytest fixtures."""
-from flask.globals import session
 import pytest
 from bookstore.main import create_app
 from bookstore.extensions import db as database
