@@ -590,3 +590,141 @@ def test_registerUser_400_Password_Confirmation_Missing(client):
     with pytest.raises(NoResultFound):
         assert not User.query.filter(User.email == payload['email']).one()
 
+
+def test_login_OK(client):
+    """
+    Test the login function.
+
+    :assert: response status code is 200.
+    :assert: access token is in response.
+    :assert: refresh token is in response.
+    """
+    payload = {
+        "email": User.get_or_404(2).email,
+        "password": "password"
+    }
+
+    response = client.post(
+        '/login',
+        headers= {
+            'Content-Type':'application/json'
+        },
+        data = json.dumps(payload)
+    )
+
+    assert response.status_code == 200
+    assert 'access_token' in response.json
+    assert 'refresh_token' in response.json
+
+
+def test_login_400_Invalid_Email(client):
+    """
+    Test the login function.
+
+        If email address is invalid
+    :assert: response status code is 400.
+    :assert: no token is sent.
+    :assert: _schema error message is in response.
+    """
+    payload = {
+        "email": 'invalid@test.com',
+        "password": "password"
+    }
+
+    response = client.post(
+        '/login',
+        headers= {
+            'Content-Type':'application/json'
+        },
+        data = json.dumps(payload)
+    )
+
+    assert response.status_code == 400
+    assert not 'access_token' in response.json
+    assert not 'refresh_token' in response.json
+    assert '_schema' in response.json
+    assert 'Wrong credentials!' in response.json['_schema']
+
+
+def test_login_400_Invalid_Password(client):
+    """
+    Test the login function.
+
+        If password is invalid:
+    :assert: response status code is 400.
+    :assert: No token is sent in response.
+    :assert: _schema error message is sent in response.
+    """
+    payload = {
+        "email": User.get_or_404(2).email,
+        "password": "invalidpassword"
+    }
+
+    response = client.post(
+        '/login',
+        headers= {
+            'Content-Type':'application/json'
+        },
+        data = json.dumps(payload)
+    )
+
+    assert response.status_code == 400
+    assert not 'access_token' in response.json
+    assert not 'refresh_token' in response.json
+    assert '_schema' in response.json
+    assert 'Wrong credentials!' in response.json['_schema']
+
+
+def test_login_400_Email_Missing(client):
+    """
+    Test the login function.
+
+        If email is missing:
+    :assert: response status is 400.
+    :assert: No token is sent in response.
+    :assert: email error is sent in response.
+    """
+    payload = {
+        "password": "invalidpassword"
+    }
+
+    response = client.post(
+        '/login',
+        headers= {
+            'Content-Type':'application/json'
+        },
+        data = json.dumps(payload)
+    )
+
+    assert response.status_code == 400
+    assert not 'access_token' in response.json
+    assert not 'refresh_token' in response.json
+    assert 'email' in response.json
+
+
+def test_login_400_Password_Missing(client):
+    """
+    Test the login function.
+
+        If password is missing:
+    :assert: response status code is 400.
+    :assert: no token is sent in response.
+    :assert: password error message in sent in response.
+    """
+
+    payload = {
+        "email": User.get_or_404(2).email
+    }
+
+    response = client.post(
+        '/login',
+        headers= {
+            'Content-Type':'application/json'
+        },
+        data = json.dumps(payload)
+    )
+
+    assert response.status_code == 400
+    assert not 'access_token' in response.json
+    assert not 'refresh_token' in response.json
+    assert 'password' in response.json

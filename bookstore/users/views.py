@@ -139,7 +139,7 @@ def login():
     try:
         schema.load(request.json)
     except ValidationError as err:
-        return err.messages
+        return err.messages, 400
 
     new_email = request.json['email']
     password = request.json['password']
