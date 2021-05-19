@@ -1,6 +1,10 @@
 """A test module for testing the functionality of the bookstore/users/views.py module."""
+import pytest
 import json
+from marshmallow.fields import Email
 from bookstore.users.models import User, Role
+from sqlalchemy.exc import NoResultFound
+from flask import request
 
 
 def test_getUsers_OK(client, admin_access_token):
@@ -382,4 +386,207 @@ def test_changeUserPassword_400_Password_The_Same(client, normal_access_token):
     
     assert response.status_code == 400
     assert '_schema' in response.json
+
+
+def test_registerUser_OK(client):
+    """
+    Test the registerUser function.
+    
+    :assert: status code is 201.
+    :assert: user was returned in response.
+    :assert: user has a role "User" and doesn't have a role "Admin".
+    :assert: user is in the database.
+    :assert: a new user is created with 0 books reserved.
+    """
+    payload = {
+        "email": "user3@test.com",
+        "password": 'password',
+        "password_confirmation": 'password'
+    }
+
+    response = client.post(
+        '/register',
+        headers = {
+            'Content-Type':'application/json'
+        },
+        data=json.dumps(payload)
+    )
+
+    user = User.query.filter(User.email == payload['email']).one()
+
+    assert response.status_code == 201
+    assert response.json
+    assert 'email' in response.json
+    assert payload['email'] == response.json['email']
+    assert user
+    assert user.has_role("User")
+    assert not user.has_role("Admin")
+    assert user.books_amount == 0
+
+
+def test_registerUser_400_Email_Already_Exists(client):
+    """
+    Test the registerUser function.
+
+    :assert: response status code is 400.
+    :assert: error 'email' is returned in response.
+    :assert: there is only one user with this email in the database.
+    """
+    payload = {
+        "email": User.get_or_404(1).email,
+        "password": 'password',
+        "password_confirmation": 'password'
+    }
+
+    response = client.post(
+        '/register',
+        headers = {
+            'Content-Type':'application/json'
+        },
+        data=json.dumps(payload)
+    )
+
+    assert response.status_code == 400
+    assert 'email' in response.json
+    assert len(User.query.filter(User.email == payload['email']).all()) == 1
+
+
+def test_registerUser_400_Passwords_Must_Match(client):
+    """
+    Test the registerUser function.
+        
+        If password don't match
+    :assert: status code is 400.
+    :assert: _schema is included in response.
+    :assert: user was not registered.
+    """
+    payload = {
+        "email": 'user4@test.com',
+        "password": 'password',
+        "password_confirmation": 'password1'
+    }
+
+    response = client.post(
+        '/register',
+        headers = {
+            'Content-Type':'application/json'
+        },
+        data=json.dumps(payload)
+    )
+
+    assert response.status_code == 400
+    assert '_schema' in response.json
+    with pytest.raises(NoResultFound):
+        assert not User.query.filter(User.email == payload['email']).one()
+
+
+def test_registerUser_400_Invalid_Email(client):
+    """
+    Test the registerUser function.
+
+        If provided email address was invalid:
+    :assert: response status code is 400.
+    :assert: email errors are returned in response
+    :assert: user was not registered.
+    """
+    payload = {
+        "email": 'invalidmail@.com',
+        "password": 'password',
+        "password_confirmation": 'password'
+    }
+
+    response = client.post(
+        '/register',
+        headers = {
+            'Content-Type':'application/json'
+        },
+        data=json.dumps(payload)
+    )
+
+    assert response.status_code == 400
+    assert 'email' in response.json
+    with pytest.raises(NoResultFound):
+        assert not User.query.filter(User.email == payload['email']).one()
+
+
+def test_registerUser_400_Email_Missing(client):
+    """
+    Test the registerUser function.
+
+        If email is missing:
+    :assert: response status code is 400.
+    :assert: email errors are in response json.
+    """
+    payload = {
+        "password": 'password',
+        "password_confirmation": 'password'
+    }
+
+    response = client.post(
+        '/register',
+        headers = {
+            'Content-Type':'application/json'
+        },
+        data=json.dumps(payload)
+    )
+
+    assert response.status_code == 400
+    assert 'email' in response.json
+
+
+def test_registerUser_400_Password_Missing(client):
+    """
+    Test the registerUser function.
+
+        If password is missing:
+    :assert: response status code is 400.
+    :assert: password errors are in response json.
+    :assert: user was not registered.
+    """
+    payload = {
+        "email": 'test10@user.com',
+        "password_confirmation": 'password'
+    }
+
+    response = client.post(
+        '/register',
+        headers= {
+            'Content-Type':'application/json'
+        },
+        data = json.dumps(payload)
+    )
+
+    assert response.status_code == 400
+    assert 'password' in response.json
+    with pytest.raises(NoResultFound):
+        assert not User.query.filter(User.email == payload['email']).one()
+
+
+def test_registerUser_400_Password_Confirmation_Missing(client):
+    """
+    Test the registerUser function.
+
+        If password_confirmation is missing:
+    :assert: response status code is 400.
+    :assert: password_confirmation errors are in response.
+    :assert: user was not created.
+    """
+
+    payload = {
+        "email": 'test10@user.com',
+        'password': 'password'
+    }
+
+    response = client.post(
+        '/register',
+        headers= {
+            'Content-Type':'application/json'
+        },
+        data = json.dumps(payload)
+    )
+
+    assert response.status_code == 400
+    assert 'password_confirmation' in response.json
+    with pytest.raises(NoResultFound):
+        assert not User.query.filter(User.email == payload['email']).one()
 
