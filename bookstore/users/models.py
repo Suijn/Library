@@ -1,6 +1,6 @@
 """Models module."""
 from ..extensions import db, ma
-from sqlalchemy.orm import load_only, relationship
+from sqlalchemy.orm import backref, load_only, relationship
 from ..extensions import (bcrypt)
 from marshmallow import Schema, fields, validates, ValidationError,validates_schema
 from ..models import BookSchema
@@ -9,17 +9,21 @@ from sqlalchemy import CheckConstraint
 
 
 # Associate table for users and roles
-association_table = db.Table('roles_users',
-    db.Column('roles_id', db.Integer, db.ForeignKey('roles.id')),
-    db.Column('users_id', db.Integer, db.ForeignKey('users.id'))
+roles_users = db.Table('roles_users',
+    db.Column('role_id', db.Integer, db.ForeignKey('roles.id')),
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id'))
 )
+
+
+
 
 class Role(db.Model):
     """A role for users."""
     __tablename__ = 'roles'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(), unique=True, nullable=False)
-    users = db.relationship("User", secondary=association_table, backref='roles')
+    users = db.relationship("User", secondary=roles_users, backref='roles')
+
 
     def __init__(self, name):
         self.name = name
@@ -130,12 +134,15 @@ class LoginSchema(ma.Schema):
             raise ValidationError("Wrong credentials!")
 
 
+
+    
 class UserSchema(ma.Schema):
     """A schema for user."""
     id = fields.Integer()
     email = fields.Email()
     books_amount = fields.Integer()
-    roles = fields.Nested("RoleSchema", many=True)
+    # roles = fields.Nested("RoleSchema", many=True)
+    roles = fields.Nested(RoleSchema, many=True)
 
     @validates('email')
     def validateEmailUnique(self, value):
@@ -144,6 +151,8 @@ class UserSchema(ma.Schema):
 
         if user:
             raise ValidationError('Provided email is already in use!')
+
+
 
 class UpdatePasswordSchema(ma.Schema):
     """Schema to update user password."""

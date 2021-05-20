@@ -1,9 +1,11 @@
 """A test module for testing cli commands."""
 
-from typing import get_args
 from bookstore import commands
-from bookstore.users.models import User, Role
+from bookstore.users.models import User, Role, roles_users
+from sqlalchemy.sql import exists, roles
+from bookstore.extensions import db
 
+from sqlalchemy.sql import text
 
 def test_create_admin_user_OK(cli_runner):
     """
@@ -70,3 +72,34 @@ def test_create_role_Only_One_Role_In_Db(cli_runner, db_populate):
 
     assert len(Role.query.filter(Role.name == 'Admin').all()) == 1
     assert len(Role.query.filter(Role.name == 'User').all()) == 1
+
+
+def test_assign_role_to_user_OK(cli_runner, db_populate):
+    """
+    Test the assign_role_to_user function.
+
+    :assert: a role was assigned to the user.
+    """
+    admin_role = Role.query.filter(Role.name == 'Admin').one()
+
+    # Get a normal user.
+    subquery = db.session.query(roles_users).filter(
+        roles_users.c.user_id == User.id,
+        roles_users.c.role_id == admin_role.id
+    )
+
+    normal_user = User.query.filter(
+        ~subquery.exists()
+    ).first()
+
+    user_id = normal_user.id
+    args = [str(admin_role.id), str(user_id)]
+
+    cli_runner.invoke(commands.assign_role_to_user, args)
+
+    user = db.session.query(User).get_or_404(user_id)
+    assert user.has_roles(['User','Admin'])
+
+
+
+

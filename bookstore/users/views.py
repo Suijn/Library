@@ -1,5 +1,4 @@
-import datetime
-from datetime import timedelta
+
 from flask import (Blueprint, request, jsonify, abort)
 from .models import UserSchema, User, RegisterSchema, LoginSchema, Role, UpdatePasswordSchema
 from ..extensions import db, bcrypt
@@ -121,7 +120,7 @@ def registerUser():
         role = Role.query.filter_by(name='User').one()
     except NoResultFound as err:
         role = Role('User')
-   
+
     user = User(password, email)
     user.roles.append(role)
 

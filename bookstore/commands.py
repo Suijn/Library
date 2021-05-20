@@ -30,9 +30,8 @@ def create_admin_user(email, password):
         user_role = Role.query.filter_by(name='User').one()
     except NoResultFound as err:
         user_role = Role('User')    
-    
-    admin.roles.append(admin_role)
-    admin.roles.append(user_role)
+
+    admin.roles.extend([admin_role, user_role])
 
     db.session.add(admin)
     db.session.commit()
@@ -69,8 +68,8 @@ def assign_role_to_user(role_id, user_id):
         role_id,
         user_id
     """
-    user = User.get_or_404(user_id)
-    role = Role.query.get(role_id)
+    user = User.get_or_404(int(user_id))
+    role = Role.query.get(int(role_id))
 
     if role not in user.roles:
         user.roles.append(role)
