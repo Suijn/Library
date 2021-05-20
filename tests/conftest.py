@@ -85,3 +85,17 @@ def normal_access_token(client):
     access_token = response.json['access_token']
     return access_token
 
+
+@pytest.fixture()
+def refresh_token(client):
+    """Get the refresh token."""
+    payload = json.dumps({
+        "email":"admin@test.com",
+        "password":"password",
+    })
+
+    response = client.post('/login', headers={'Content-Type':'application/json'} , data=payload)
+    
+    refresh_token = response.json['refresh_token']
+    return refresh_token 
+

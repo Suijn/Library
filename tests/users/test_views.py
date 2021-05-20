@@ -5,7 +5,9 @@ from marshmallow.fields import Email
 from bookstore.users.models import User, Role
 from sqlalchemy.exc import NoResultFound
 from flask import request
-
+from flask_jwt_extended import create_refresh_token
+from datetime import timedelta
+import time
 
 def test_getUsers_OK(client, admin_access_token):
     """The database starts with two users in the db (One Admin user and one normal user) """
@@ -728,3 +730,68 @@ def test_login_400_Password_Missing(client):
     assert not 'access_token' in response.json
     assert not 'refresh_token' in response.json
     assert 'password' in response.json
+
+
+def test_refreshToken_OK(client, refresh_token):
+    """
+    Test the refreshToken function.
+
+        If refresh token is sent in request.
+    :assert: response status code is 200.
+    :assert: access token is sent in response.
+    """
+
+    response = client.post(
+        '/refreshToken',
+        headers= {
+            'Content-Type':'application/json',
+            'Authorization': 'Bearer ' + refresh_token
+        }
+    )
+
+    assert response.status_code == 200
+    assert 'access_token' in response.json
+
+
+def test_refreshToken_401_Missing_Refresh_Token(client):
+    """
+    Test the refreshToken function.
+
+        If refresh token is missing in request:
+    :assert: response status code is 401.
+    :assert: the new access token is not sent.
+    """
+    response = client.post(
+        '/refreshToken',
+        headers= {
+            'Content-Type':'application/json'
+        }
+    )
+
+    assert response.status_code == 401
+    assert not 'access_token' in response.json
+
+
+def test_refreshToken_400_Invalid_Refresh_Token(client, refresh_token):
+    """
+    Test the refreshToken function.
+
+        If refresh token is invalid:
+    :assert: response status code is 422.
+    :assert: the new access token is not sent in response.
+    :assert: error message is sent in response.
+    """
+
+    response = client.post(
+        '/refreshToken',
+        headers= {
+            'Content-Type':'application/json',
+            'Authorization': 'Bearer ' + refresh_token + '12351kasdmasj'
+        }
+    )
+
+    assert response.status_code == 422
+    assert not 'access_token' in response.json
+    assert 'msg' in response.json
+
+
