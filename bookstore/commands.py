@@ -17,6 +17,7 @@ def create_admin_user(email, password):
         email,
         password
     """
+
     admin = User(password, email)
 
     #Create Admin and User roles if not found.

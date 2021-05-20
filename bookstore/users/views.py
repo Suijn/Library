@@ -144,7 +144,6 @@ def login():
         return err.messages, 400
 
     new_email = request.json['email']
-    password = request.json['password']
     
     user = User.query.filter_by(email=new_email).first()
 

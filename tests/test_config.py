@@ -10,7 +10,7 @@ def test_app_config(app, db):
     assert app.secret_key == 'secret key'
 
 
-def test_db():
+def test_db(db_populate):
     """Test the database starts up with two users: one Admin user and one Normal user."""
 
     assert len(User.query.all()) == 2

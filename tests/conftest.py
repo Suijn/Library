@@ -17,7 +17,7 @@ def app():
     return app
 
 
-@pytest.fixture()
+@pytest.fixture(autouse=True)
 def db(app):
     """Yield db and tear it down."""
     db, db_path = tempfile.mkstemp()
@@ -32,7 +32,7 @@ def db(app):
     os.unlink(db_path)
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture()
 def db_populate(db):
     """Populate the database with mock data."""
     
@@ -97,5 +97,12 @@ def refresh_token(client):
     response = client.post('/login', headers={'Content-Type':'application/json'} , data=payload)
     
     refresh_token = response.json['refresh_token']
-    return refresh_token 
+    return refresh_token
+
+
+@pytest.fixture()
+def cli_runner(app):
+    runner = app.test_cli_runner()
+
+    return runner
 
