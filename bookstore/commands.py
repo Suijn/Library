@@ -17,21 +17,20 @@ def create_admin_user(email, password):
         email,
         password
     """
-
-    admin = User(password, email)
-
     #Create Admin and User roles if not found.
     try:
         admin_role = Role.query.filter_by(name='Admin').one()
     except NoResultFound as err:
         admin_role = Role('Admin')
+        
 
     try:
         user_role = Role.query.filter_by(name='User').one()
     except NoResultFound as err:
         user_role = Role('User')    
 
-    admin.roles.extend([admin_role, user_role])
+    admin = User(password, email)
+    admin.roles.append(admin_role)
 
     db.session.add(admin)
     db.session.commit()

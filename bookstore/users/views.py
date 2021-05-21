@@ -120,9 +120,10 @@ def registerUser():
         role = Role.query.filter_by(name='User').one()
     except NoResultFound as err:
         role = Role('User')
+        db.session.add(role)
+        db.session.commit()
 
     user = User(password, email)
-    user.roles.append(role)
 
     db.session.add(user)
     db.session.commit()

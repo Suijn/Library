@@ -53,6 +53,8 @@ class User(db.Model):
     def __init__(self, password, email):
         self.set_password(password)
         self.email = email
+        user_role = Role.query.filter(Role.name == 'User').one()
+        self.roles.append(user_role)
 
     
     def set_password(self, password):

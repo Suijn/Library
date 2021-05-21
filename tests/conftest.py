@@ -1,10 +1,12 @@
 """A file for pytest fixtures."""
+from bookstore.models import Reservation, ReservationSchema
 import pytest
 from bookstore.main import create_app
 from bookstore.extensions import db as database
 import tempfile
 import os
 from bookstore.users.models import User, Role
+from bookstore.models import Book, Reservation
 import json
 
 
@@ -34,23 +36,69 @@ def db(app):
 
 @pytest.fixture()
 def db_populate(db):
-    """Populate the database with mock data."""
+    """Populate the database with mock user data."""
     
+    #Create roles
+    user_role = Role('User')
+    admin_role = Role('Admin')
+
+    db.session.add(user_role)
+    db.session.add(admin_role)
+    db.session.commit()
+
     #Create an admin user.
     admin = User("password", "admin@test.com")
-    admin.roles.extend([Role('Admin'), Role('User')])
+    admin.roles.append(admin_role)
 
     db.session.add(admin)
-    db.session.commit()
 
     #Create normal users.
-    user = User("password", "user@test.com")
-    role = Role.query.filter(Role.name=='User').one()
-    user.roles.append(role)
+    users = [
+        User("password", "user@test.com"),
+        User('password', 'user2@test.com'),
+        User('password', 'user3@test.com'),
+        User('password', 'user4@test.com'),
+        User('password', 'user5@test.com')
+    ]
 
-    db.session.add(user)
+    db.session.add_all(users)
     db.session.commit()
 
+
+@pytest.fixture()
+def db_populate_books(db):
+    """Populate the test database with mock books data."""
+
+    #Create books.
+    books = [
+        Book('Book1', 'Author1'),
+        Book('Book2', 'Author1'),
+        Book('Book3', 'Author1'),
+        Book('Book4', 'Author2'),
+        Book('Book5', 'Author2'),
+        Book('Book6', 'Author3'),
+    ]
+    
+    db.session.add_all(books)
+    db.session.commit()
+
+
+@pytest.fixture()
+def db_populate_reservations(db_populate_books, db):
+    """Populate the mock database with test reservations data."""
+
+    books = db.session.query(Book).all()
+    users = db.session.query(User).all()
+
+
+    user = User.query.filter(User.email == 'user@test.com').one()
+
+    for x in range(5):
+        res = Reservation()
+        res.book = books[x]
+        res.user = users[x]
+        db.session.add(res)
+    db.session.commit()
 
 @pytest.fixture()
 def client(app, db_populate):
@@ -101,7 +149,7 @@ def refresh_token(client):
 
 
 @pytest.fixture()
-def cli_runner(app):
+def cli_runner(app, db_populate):
     runner = app.test_cli_runner()
 
     return runner

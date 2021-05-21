@@ -1,3 +1,4 @@
+from json import dump
 from sqlalchemy.sql.operators import nullsfirst_op
 from .extensions import db, ma
 from sqlalchemy.orm import backref, relationship
@@ -23,6 +24,14 @@ class Book(db.Model):
     pages = db.Column(db.Integer, nullable=True)
     isReserved = db.Column(db.Boolean, default=False)
     reservation = db.relationship('Reservation', backref='book')
+
+
+    def __init__(self, title, author, pages = 0, isReserved = False):
+        self.title = title
+        self.author = author
+        self.pages = pages
+        self.isReserved = isReserved
+
 
     def __repr__(self):
         return f'{self.__class__}'
@@ -69,6 +78,7 @@ class Reservation(db.Model):
 class ReservationSchema(ma.Schema):
     """A read-only schema for the Reservation model."""
     book_id = fields.Integer(dump_only=True)
+    reserved_by = fields.Integer(dump_only=True)
     status = fields.Str(dump_only=True)
     start_date = fields.Date(dump_only=True)
     expected_end_date = fields.Date(dump_only=True)

@@ -10,11 +10,11 @@ from datetime import timedelta
 import time
 
 def test_getUsers_OK(client, admin_access_token):
-    """The database starts with two users in the db (One Admin user and one normal user) """
+    """The database starts with 6 users in the db (One Admin user and 5 normal users) """
     response = client.get('/users', headers={'Authorization': 'Bearer ' + admin_access_token})
 
     assert response.status_code == 200
-    assert len(response.json) == 2
+    assert len(response.json) == 6
 
 
 def test_getUsers_401_Invalid_Token_Type(client, normal_access_token):
@@ -401,7 +401,7 @@ def test_registerUser_OK(client):
     :assert: a new user is created with 0 books reserved.
     """
     payload = {
-        "email": "user3@test.com",
+        "email": "newuser@test.com",
         "password": 'password',
         "password_confirmation": 'password'
     }
@@ -463,7 +463,7 @@ def test_registerUser_400_Passwords_Must_Match(client):
     :assert: user was not registered.
     """
     payload = {
-        "email": 'user4@test.com',
+        "email": 'newuser@test.com',
         "password": 'password',
         "password_confirmation": 'password1'
     }
