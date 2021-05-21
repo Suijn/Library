@@ -48,7 +48,7 @@ class User(db.Model):
     password = db.Column(db.LargeBinary(), nullable=False)
     email= db.Column(db.String(), nullable=False, unique=True)
     books_amount = db.Column(db.Integer, default=0, nullable=False)
-    reservation = db.relationship("Reservation", backref='user')
+    reservations = db.relationship("Reservation", backref='user')
 
     def __init__(self, password, email):
         self.set_password(password)
