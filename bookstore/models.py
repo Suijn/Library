@@ -103,19 +103,36 @@ class BookUpdateSchema(ma.Schema):
 
 class BookSearchSchema(ma.Schema):
     """A schema to search for books."""
-    title = fields.Str(required=True)
-    author = fields.Str(required=True)
+    title = fields.Str(default='', load_only=True)
+    author = fields.Str(default='', load_only=True)
 
     @validates_schema
-    def validateAtLeastOneFieldPresent(self, data, **kwargs):
-        '''Validates there is at least one field filled.'''
+    def validateAtLeastOneFieldFilled(self, data, **kwargs):
+        '''
+        Validates there is at least one field filled.
+        
+        If there is only only one field filled, check:
+            If it consists of only whitespaces - raise Validation error.
+            If it is empty - raise Validation error.
+        '''
 
         if "title" not in data and "author" not in data:
             raise ValidationError("No title or author.")
-        if data["title"].isspace() and data["author"].isspace():
-            raise ValidationError("No title or author.")
-        if not data["title"] and not data["author"]:
-            raise ValidationError("No title or author.")
+        
+        if "title" or "author" in data:
+            #There is only one item in the dictionary.
+            for field, value in data.items():
+                #If value consists of only whitespaces or is empty - raise Validation error.
+                if value.isspace() or not value:
+                    raise ValidationError("No title or author.")     
+
+        if "title" in data and "author" in data:
+            #Raise Validation error if both fields consist of only whitespaces.
+            if data["title"].isspace() and data["author"].isspace():
+                raise ValidationError("No title or author.")
+            #Raise Validation error if both fields are empty.
+            if not data["title"] and not data["author"]:
+                raise ValidationError("No title or author.")
 
 class BookSearchSchemaAdmin(ma.Schema):
     """A schema to search for books."""
@@ -124,7 +141,7 @@ class BookSearchSchemaAdmin(ma.Schema):
     author = fields.Str(required=True)
 
     @validates_schema
-    def validateAtLeastOneFieldPresent(self, data, **kwargs):
+    def validateAtLeastOneFieldFilled(self, data, **kwargs):
         '''Validates there is at least one field filled.'''
 
         if "id" not in data and "title" not in data and "author" not in data:

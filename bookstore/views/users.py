@@ -36,17 +36,32 @@ def getUserReservations():
 @jwt_required()
 @require_role()
 def searchForBooks():
-    """A search utility for users to search for books by title and author."""
+    """
+    A search utility for users to search for books by title and author.
+    
+    At least one field is required, if one field is empty - match anything.
+    """
     schema = BookSearchSchema()
 
     try:
         schema.load(request.json)
     except ValidationError as err:
         return err.messages, 400
-    
-    book_title = "%{}%".format(request.json['title'])
-    book_author = "%{}%".format(request.json['author'])
 
+
+    #Remove additional whitespace's
+    #If field is empty - match anything.
+    try:
+        book_title = "%{}%".format(request.json['title'].strip())
+    except KeyError:
+        book_title = "%{}%".format('')
+
+    try:
+        book_author = "%{}%".format(request.json['author'].strip())
+    except KeyError:
+        book_author = "%{}%".format('')
+
+        
     books = Book.query.filter(
         Book.title.like(book_title), 
         Book.author.like(book_author)
