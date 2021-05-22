@@ -304,6 +304,72 @@ class TestUsers:
 
         assert response.status_code == 401
 
+    
+    def test_getBook_OK(self, client, normal_access_token, db_populate_books):
+        """
+        Test the getBook function.
+
+        :assert: response status code is 200.
+        :assert: api returns a proper response.
+        """
+        book = Book.query.get(1)
+
+        response = client.get(
+            'users/book/' + str(book.id),
+            headers = {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer '+ normal_access_token
+            }
+        )
+
+        assert response.status_code == 200
+        assert response.json
+
+        keys_expected = ['author','id','isReserved','pages','title']
+        response_keys = [x for x in response.json.keys()]
+
+        assert set(keys_expected).issubset(set(response_keys))
+        assert book.id == response.json['id']
+
+    
+    def test_getBook_401_Token_Missing(self, client, db_populate_books):
+        """
+        Test the getBook function.
+        
+        If token is missing:
+        :assert: response status code is 401.
+        """
+        book = Book.query.get(1)
+
+        response = client.get(
+            'users/book/' + str(book.id),
+            headers = {
+                'Content-Type': 'application/json'
+            }
+        )
+
+        assert response.status_code == 401
+
+    
+    def test_getBook_404_Book_Not_Exists(self, client, normal_access_token, db_populate_books):
+        """
+        Test the getBook function.
+
+        If book doesn't exist:
+        :assert: status code is 404
+        """
+        response = client.get(
+            'users/book/1000',
+            headers = {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + normal_access_token
+            }
+        )
+        
+        assert response.status_code == 404
+
+
+
 
 
 

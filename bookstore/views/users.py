@@ -78,7 +78,7 @@ def getBook(id):
     book = Book.get_or_404(id)
     payload = book_schema.dump(book)
 
-    return payload, 200    
+    return jsonify(payload), 200    
 
 
 @blueprint.route('/reserveBook/<id>', methods=['POST'])
