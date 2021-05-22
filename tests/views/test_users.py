@@ -1,10 +1,33 @@
 """A testing module for the views/users.py module."""
-
+import pytest
 import json
 from bookstore.users.models import User
-from bookstore.models import Book
+from bookstore.models import Book, Reservation
+from sqlalchemy.exc import NoResultFound
+from bookstore.extensions import db
 
 class TestUsers:
+
+    @pytest.fixture()
+    def reserveFiveBooks(self, db_populate, db_populate_books):
+        """
+        Populates the test database with 5 reservations created for one single user.
+        """
+
+        books = db.session.query(Book).all()
+        user = db.session.query(User).filter(User.email == 'user@test.com').one()
+
+        for x in range(5):
+            res = Reservation()
+            res.book = books[x]
+            res.user = user
+
+            books[x].isReserved = True
+            user.books_amount += 1
+
+            db.session.add(res)
+        db.session.commit()
+
 
     def test_getUserReservations_OK(self, client, normal_access_token, db_populate_reservations):
         """
@@ -369,7 +392,123 @@ class TestUsers:
         assert response.status_code == 404
 
 
+    def test_reserveBook_OK(self, client, normal_access_token, db_populate_books):
+        """
+        Test the reserveBook function.
 
+        :assert: response status code is 204.
+        :assert: api returns no json response.
+        :assert: reservation was created.
+        """
+        book = Book.query.get(1)
+
+        response = client.post(
+            'users/reserveBook/' + str(book.id),
+            headers = {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + normal_access_token
+            }
+        )
+
+        assert response.status_code == 204
+        assert not response.json
+        assert Reservation.query.filter(
+            Reservation.book_id == book.id,
+            Reservation.reserved_by == User.query.filter(User.email == 'user@test.com').one().id,
+            Reservation.status == 'STARTED'
+        ).one()
+
+    
+    def test_reserveBook_400_Book_Already_Reserved(self, client, normal_access_token, db_populate_reservations):
+        """
+        Test the reserveBook function.
+
+        If book is already reserved:
+        :assert: response status code is 400.
+        :assert: reservation was not made.
+        """
+        book = Book.query.get(3)
+
+        response = client.post(
+            'users/reserveBook/' + str(book.id),
+            headers = {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + normal_access_token
+            }
+        )
+
+        assert response.status_code == 400
+        with pytest.raises(NoResultFound):
+            assert not Reservation.query.filter(
+            Reservation.book_id == book.id,
+            Reservation.reserved_by == User.query.filter(User.email == 'user@test.com').one().id,
+            Reservation.status == 'STARTED'
+        ).one()
+
+
+    def test_reserveBook_400_You_Cannot_Reserve_More_Books(self, client, normal_access_token, reserveFiveBooks):
+        """
+        Test the reserveBook function.
+
+        If user has 5 reservations with status "STARTED":
+        :assert: response status code is 400.
+        :assert: reservation is not created.
+        """
+
+        book = Book.query.get(6)
+
+        response = client.post(
+            'users/reserveBook/' + str(book.id),
+            headers = {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + normal_access_token
+            }
+        )
+
+        assert response.status_code == 400
+        with pytest.raises(NoResultFound):
+            assert not Reservation.query.filter(
+            Reservation.book_id == book.id,
+            Reservation.reserved_by == User.query.filter(User.email == 'user@test.com').one().id,
+            Reservation.status == 'STARTED'
+        ).one()
+
+
+    def test_reserveBook_404_Book_Not_Exists(self, client, normal_access_token):
+        """
+        Test the reserveBook function.
+
+        If book does not exist:
+        :assert: response status code is 404.
+        """
+
+        response = client.post(
+            'users/reserveBook/1000',
+            headers = {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + normal_access_token
+            }
+        )
+        
+        assert response.status_code == 404
+
+    
+    def test_reserveBook_401_Missing_Token(self, client, db_populate_books):
+        """
+        Test the reserveBook function.
+
+        If token is missing:
+        :assert: response status code is 401.
+        """
+        book = Book.query.get(1)
+        response = client.post(
+            'users/reserveBook/' + str(book.id),
+            headers = {
+                'Content-Type': 'application/json'
+            }
+        )
+
+        assert response.status_code == 401
 
 
 

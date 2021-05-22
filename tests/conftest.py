@@ -90,13 +90,14 @@ def db_populate_reservations(db_populate_books, db):
     books = db.session.query(Book).all()
     users = db.session.query(User).all()
 
-
-    user = User.query.filter(User.email == 'user@test.com').one()
-
     for x in range(5):
         res = Reservation()
         res.book = books[x]
         res.user = users[x]
+
+        books[x].isReserved = True
+        users[x].books_amount += 1
+
         db.session.add(res)
     db.session.commit()
 
