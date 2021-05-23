@@ -16,7 +16,7 @@ books_schema = BookSchema(many=True)
 @blueprint.route('/books', methods=['GET'])
 @jwt_required()
 @require_role(['Admin'])
-def getBooks():
+def get_books():
     books = Book.query.all()
     payload = books_schema.dump(books)
 
@@ -26,7 +26,7 @@ def getBooks():
 @blueprint.route('/book', methods=['POST'])
 @jwt_required()
 @require_role(['Admin'])
-def addBook():
+def add_book():
     try:
         book_schema.load(request.json)
     except ValidationError as err:
@@ -36,6 +36,8 @@ def addBook():
     author = request.json['author']
 
     book = Book(title, author)
+    if 'pages' in request.json:
+        book.pages = request.json['pages']
     
     db.session.add(book)
     db.session.commit()
@@ -47,7 +49,7 @@ def addBook():
 @blueprint.route('/book/<id>', methods=['PATCH'])
 @jwt_required()
 @require_role(['Admin'])
-def updateBook(id):
+def update_book(id):
     book = Book.get_or_404(id)
     schema = BookUpdateSchema(many=False)
 
@@ -70,7 +72,7 @@ def updateBook(id):
 @blueprint.route('/book/<id>', methods=['DELETE'])
 @jwt_required()
 @require_role(['Admin'])
-def deleteBook(id):
+def delete_book(id):
     book = Book.get_or_404(id)
 
     db.session.delete(book)
@@ -82,7 +84,7 @@ def deleteBook(id):
 @blueprint.route('/searchBooks', methods=['POST'])
 @jwt_required()
 @require_role(['Admin'])
-def searchForBooksAdmin():
+def search_for_books():
     """Search book endpoint for admin users."""
     schema = BookSearchSchemaAdmin()
 
@@ -114,7 +116,7 @@ def searchForBooksAdmin():
 @blueprint.route('/reserveBook/<book_id>/<user_id>', methods=['POST'])
 @jwt_required()
 @require_role(['Admin'])
-def reserveBookAsAdmin(book_id, user_id):
+def reserve_book(book_id, user_id):
     """
     Reserve a book for a user.
     
@@ -148,7 +150,7 @@ def reserveBookAsAdmin(book_id, user_id):
 @blueprint.route('/cancelResBook/<book_id>', methods=['PATCH'])
 @jwt_required()
 @require_role(['Admin'])
-def cancelReservation(book_id):
+def cancel_reservation(book_id):
     """
     Cancel reservation of a book for the given user.
     

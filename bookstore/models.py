@@ -1,7 +1,7 @@
 from json import dump
 from sqlalchemy.sql.operators import nullsfirst_op
 from .extensions import db, ma
-from sqlalchemy.orm import backref, relationship
+from sqlalchemy.orm import backref, load_only, relationship
 from marshmallow import Schema, fields, validates, ValidationError,validates_schema
 from flask import abort
 import datetime
@@ -89,8 +89,8 @@ class BookSchema(ma.Schema):
     id = fields.Integer()
     title = fields.Str(required=True)
     author = fields.Str(required=True)
-    pages = fields.Integer()
-    isReserved = fields.Bool()
+    pages = fields.Integer(default=0)
+    isReserved = fields.Bool(dump_only=True)
 
 
 class BookUpdateSchema(ma.Schema):
