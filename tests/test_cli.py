@@ -7,7 +7,7 @@ from bookstore.extensions import db
 
 from sqlalchemy.sql import text
 
-def test_create_admin_user_OK(cli_runner):
+def test_create_admin_user_ok(cli_runner):
     """
     Test the create_admin_user function.
 
@@ -24,7 +24,7 @@ def test_create_admin_user_OK(cli_runner):
     assert admin.has_role('User')
 
 
-def test_create_admin_user_Email_Not_Unique(cli_runner, db_populate):
+def test_create_admin_user_email_not_unique(cli_runner, db_populate):
     """
     Test the create_admin_user function.
 
@@ -57,7 +57,7 @@ def test_create_role_OK(cli_runner):
     assert user_role
 
 
-def test_create_role_Only_One_Role_In_Db(cli_runner, db_populate):
+def test_create_role_only_one_role_in_db(cli_runner, db_populate):
     """
     Test the create_role function.
 
@@ -74,7 +74,7 @@ def test_create_role_Only_One_Role_In_Db(cli_runner, db_populate):
     assert len(Role.query.filter(Role.name == 'User').all()) == 1
 
 
-def test_assign_role_to_user_OK(cli_runner, db_populate):
+def test_assign_role_to_user_ok(cli_runner, db_populate):
     """
     Test the assign_role_to_user function.
 

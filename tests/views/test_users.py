@@ -9,7 +9,7 @@ from bookstore.extensions import db
 class TestUsers:
 
     @pytest.fixture()
-    def reserveFiveBooks(self, db_populate, db_populate_books):
+    def reserve_five_books(self, db_populate, db_populate_books):
         """
         Populates the test database with 5 reservations created for one single user.
         """
@@ -29,9 +29,9 @@ class TestUsers:
         db.session.commit()
 
 
-    def test_getUserReservations_OK(self, client, normal_access_token, db_populate_reservations):
+    def test_get_user_reservations_ok(self, client, normal_access_token, db_populate_reservations):
         """
-        Test the getUserReservations function.
+        Test the get_user_reservations function.
 
         :assert: status code is 200.
         :assert: api returns a proper response.
@@ -55,9 +55,9 @@ class TestUsers:
         assert response.json[0]['reserved_by'] == user.id
 
     
-    def test_getUserReservations_Missing_Token(self, client):
+    def test_get_user_reservations_missing_token(self, client):
         """
-        Test the getUserReservation function.
+        Test the get_user_reservations function.
             If token is missing in request:
     
         :assert: response status code is 401.
@@ -69,9 +69,9 @@ class TestUsers:
         assert response.status_code == 401
 
 
-    def test_searchForBooks_All_OK(self, client, normal_access_token, db_populate_books):
+    def test_search_for_books_all_ok(self, client, normal_access_token, db_populate_books):
         """
-        Test the searchForBooks function.
+        Test the search_for_books function.
 
         :assert: status code is 200.
         :assert: api returns a proper response.
@@ -101,9 +101,9 @@ class TestUsers:
         assert len(response.json) == len(Book.query.all())
 
     
-    def test_searchForBooks_Only_Title_OK(self, client, normal_access_token, db_populate_books):
+    def test_search_for_books_only_title_ok(self, client, normal_access_token, db_populate_books):
         """
-        Test the searchForBooks function.
+        Test the search_for_books function.
 
         :assert: status code is 200.
         :assert: api returns a proper response.
@@ -132,9 +132,9 @@ class TestUsers:
         assert len(response.json) == len(Book.query.all())
 
 
-    def test_searchForBooks_Only_Author_OK(self, client, normal_access_token, db_populate_books):
+    def test_search_for_books_only_author_ok(self, client, normal_access_token, db_populate_books):
         """
-        Test the searchForBooks function.
+        Test the search_for_books function.
 
         :assert: status code is 200.
         :assert: api returns a proper response.
@@ -163,9 +163,9 @@ class TestUsers:
         assert len(response.json) == len(Book.query.all()) 
 
     
-    def test_searchForBooks_400_Both_Fields_Empty(self, client, normal_access_token):
+    def test_search_for_books_400_both_fields_empty(self, client, normal_access_token):
         """
-        Test the searchForBooks function.
+        Test the search_for_books function.
 
             If both fields are empty:
         :assert: response status code is 400.
@@ -191,9 +191,9 @@ class TestUsers:
         assert response.json['_schema'][0] == "No title or author."
 
 
-    def test_searchForBooks_400_Both_Fields_Missing(self, client, normal_access_token):
+    def test_search_for_books_400_both_fields_missing(self, client, normal_access_token):
         """
-        Test the searchForBooks function.
+        Test the search_for_books function.
 
             If both fields are missing:
         :assert: response status code is 400.
@@ -217,9 +217,9 @@ class TestUsers:
         assert response.json['_schema'][0] == "No title or author."
 
     
-    def test_searchForBooks_Strip_Whitespaces(self, client, normal_access_token, db_populate_books):
+    def test_search_for_books_strip_whitespaces(self, client, normal_access_token, db_populate_books):
         """
-        Test the searchForBooks function.
+        Test the search_for_books function.
 
             If in request there are leading and trailing whitespaces:
         :assert: strips leading and trailing whitespaces
@@ -259,8 +259,10 @@ class TestUsers:
         assert len(response.json) == len(books_expected)
 
     
-    def test_searchForBooks_400_One_Field_AND_Empty(self, client, normal_access_token):
+    def test_search_for_books_400_one_field_and_empty(self, client, normal_access_token):
         """
+        Test the search_for_books function.
+
         If there is only one field filled and it is empty:
         :assert: response status code is 400.
         :assert: schema errors are sent in response.
@@ -282,8 +284,10 @@ class TestUsers:
         assert response.json['_schema'][0] == "No title or author."  
 
 
-    def test_searchForBooks_400_One_Field_AND_Only_Whitespaces(self, client, normal_access_token):
+    def test_search_for_books_400_one_field_and_only_whitespaces(self, client, normal_access_token):
         """
+        Test the search_for_books function.
+
         It there is only one field filled and consists of only whitespaces.
         :assert: response status code is 400.
         :assert: schema errors are sent in response.
@@ -305,9 +309,9 @@ class TestUsers:
         assert response.json['_schema'][0] == "No title or author." 
 
     
-    def test_searchForBooks_401_Token_Missing(self, client):
+    def test_search_for_books_401_token_missing(self, client):
         """
-        Test the searchForBooks function.
+        Test the search_for_books function.
 
             If token is missing:
         :assert: response status code is 401.
@@ -328,9 +332,9 @@ class TestUsers:
         assert response.status_code == 401
 
     
-    def test_getBook_OK(self, client, normal_access_token, db_populate_books):
+    def test_get_book_OK(self, client, normal_access_token, db_populate_books):
         """
-        Test the getBook function.
+        Test the get_book function.
 
         :assert: response status code is 200.
         :assert: api returns a proper response.
@@ -355,9 +359,9 @@ class TestUsers:
         assert book.id == response.json['id']
 
     
-    def test_getBook_401_Token_Missing(self, client, db_populate_books):
+    def test_get_book_401_token_missing(self, client, db_populate_books):
         """
-        Test the getBook function.
+        Test the get_book function.
         
         If token is missing:
         :assert: response status code is 401.
@@ -374,9 +378,9 @@ class TestUsers:
         assert response.status_code == 401
 
     
-    def test_getBook_404_Book_Not_Exists(self, client, normal_access_token, db_populate_books):
+    def test_get_book_404_book_not_exists(self, client, normal_access_token, db_populate_books):
         """
-        Test the getBook function.
+        Test the get_book function.
 
         If book doesn't exist:
         :assert: status code is 404
@@ -392,9 +396,9 @@ class TestUsers:
         assert response.status_code == 404
 
 
-    def test_reserveBook_OK(self, client, normal_access_token, db_populate_books):
+    def test_reserve_book_ok(self, client, normal_access_token, db_populate_books):
         """
-        Test the reserveBook function.
+        Test the reserve_book function.
 
         :assert: response status code is 204.
         :assert: api returns no json response.
@@ -419,9 +423,9 @@ class TestUsers:
         ).one()
 
     
-    def test_reserveBook_400_Book_Already_Reserved(self, client, normal_access_token, db_populate_reservations):
+    def test_reserve_book_400_book_already_reserved(self, client, normal_access_token, db_populate_reservations):
         """
-        Test the reserveBook function.
+        Test the reserve_book function.
 
         If book is already reserved:
         :assert: response status code is 400.
@@ -446,9 +450,9 @@ class TestUsers:
         ).one()
 
 
-    def test_reserveBook_400_You_Cannot_Reserve_More_Books(self, client, normal_access_token, reserveFiveBooks):
+    def test_reserve_book_400_you_cannot_reserve_more_books(self, client, normal_access_token, reserve_five_books):
         """
-        Test the reserveBook function.
+        Test the reserve_book function.
 
         If user has 5 reservations with status "STARTED":
         :assert: response status code is 400.
@@ -474,9 +478,9 @@ class TestUsers:
         ).one()
 
 
-    def test_reserveBook_404_Book_Not_Exists(self, client, normal_access_token):
+    def test_reserve_book_404_book_not_exists(self, client, normal_access_token):
         """
-        Test the reserveBook function.
+        Test the reserve_book function.
 
         If book does not exist:
         :assert: response status code is 404.
@@ -493,9 +497,9 @@ class TestUsers:
         assert response.status_code == 404
 
     
-    def test_reserveBook_401_Missing_Token(self, client, db_populate_books):
+    def test_reserve_book_401_missing_token(self, client, db_populate_books):
         """
-        Test the reserveBook function.
+        Test the reserve_book function.
 
         If token is missing:
         :assert: response status code is 401.
@@ -511,9 +515,9 @@ class TestUsers:
         assert response.status_code == 401
 
 
-    def test_prolong_book_OK(self, client, normal_access_token, db_populate_reservations):
+    def test_prolong_book_ok(self, client, normal_access_token, db_populate_reservations):
         """
-        Test the prolongBook function.
+        Test the prolong_book function.
 
         :assert: response status code is 204.
         :assert: no response json.
@@ -541,9 +545,9 @@ class TestUsers:
         ).one()
 
 
-    def test_prolong_book_400_Book_Cannot_Prolong(self, client, normal_access_token, db_populate_reservations):
+    def test_prolong_book_400_book_cannot_prolong(self, client, normal_access_token, db_populate_reservations):
         """
-        Test the prolongBook function.
+        Test the prolong_book function.
 
         If book has already been prolonged:
         :assert: response status code is 400.
@@ -585,9 +589,9 @@ class TestUsers:
         ).one().expected_end_date
 
 
-    def test_prolongBook_401_Can_Prolong_Only_His_Own_Reservations(self, client, normal_access_token, db_populate_reservations):
+    def test_prolong_book_401_can_prolong_only_his_own_reservations(self, client, normal_access_token, db_populate_reservations):
         """
-        Test the prolongBook function.
+        Test the prolong_book function.
         
         If user tries to prolong a book he hasn't reserved:
         :assert: response status code is 401.
@@ -612,9 +616,9 @@ class TestUsers:
         ).one().expected_end_date
 
     
-    def test_prolongBook_401_Token_Missing(self, client, db_populate_reservations):
+    def test_prolong_book_401_token_missing(self, client, db_populate_reservations):
         """
-        Test the prolongBook function.
+        Test the prolong_book function.
 
         If token is missing:
         :assert: response status code is 401.
