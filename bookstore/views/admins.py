@@ -8,7 +8,7 @@ from marshmallow import ValidationError
 from ..users.models import User
 from datetime import date
 
-blueprint = Blueprint('admins', __name__, url_prefix='/admin')
+blueprint = Blueprint('admin', __name__, url_prefix='/admin')
 
 book_schema = BookSchema()
 books_schema = BookSchema(many=True)

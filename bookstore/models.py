@@ -91,7 +91,6 @@ class BookSchema(ma.Schema):
     author = fields.Str(required=True)
     pages = fields.Integer()
     isReserved = fields.Bool()
-    user = fields.Nested("UserSchema", only=("id", "email"))
 
 
 class BookUpdateSchema(ma.Schema):
