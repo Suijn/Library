@@ -146,7 +146,7 @@ def prolong_book(book_id):
 
         db.session.commit()
     else:
-        abort(401, 'You have already prolonged the book reservation!')
+        abort(400, 'You have already prolonged the book reservation!')
 
     return '', 204
 

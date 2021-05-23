@@ -511,7 +511,133 @@ class TestUsers:
         assert response.status_code == 401
 
 
+    def test_prolong_book_OK(self, client, normal_access_token, db_populate_reservations):
+        """
+        Test the prolongBook function.
 
+        :assert: response status code is 204.
+        :assert: no response json.
+        :assert: reservation for the book was prolonged.  
+        """
+        user = User.query.filter(User.email == 'user@test.com').one()
+        book_id = user.reservations[0].book_id
+        
+
+        response = client.patch(
+            'users/prolongBook/' + str(book_id),
+            headers = {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + normal_access_token
+            }
+        )
+
+        assert response.status_code == 204
+        assert not response.json
+        assert Reservation.query.filter(
+            Reservation.book_id == book_id,
+            Reservation.reserved_by == user.id,
+            Reservation.status == 'STARTED',
+            Reservation.was_prolonged == True
+        ).one()
+
+
+    def test_prolong_book_400_Book_Cannot_Prolong(self, client, normal_access_token, db_populate_reservations):
+        """
+        Test the prolongBook function.
+
+        If book has already been prolonged:
+        :assert: response status code is 400.
+        :assert: reservation wasn't prolonged.
+        """
+        user = User.query.filter(User.email == 'user@test.com').one()
+        book_id = user.reservations[0].book_id
+
+        client.patch(
+            'users/prolongBook/' + str(book_id),
+            headers = {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + normal_access_token
+            }
+        )
+
+        reservation = Reservation.query.filter(
+            Reservation.book_id == book_id,
+            Reservation.reserved_by == user.id,
+            Reservation.status == 'STARTED',
+            Reservation.was_prolonged == True
+        ).one()
+        end_date = reservation.expected_end_date
+
+        response = client.patch(
+            'users/prolongBook/' + str(book_id),
+            headers = {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + normal_access_token
+            }
+        )
+
+        assert response.status_code == 400
+        assert end_date == Reservation.query.filter(
+            Reservation.book_id == book_id,
+            Reservation.reserved_by == user.id,
+            Reservation.status == 'STARTED',
+            Reservation.was_prolonged == True
+        ).one().expected_end_date
+
+
+    def test_prolongBook_401_Can_Prolong_Only_His_Own_Reservations(self, client, normal_access_token, db_populate_reservations):
+        """
+        Test the prolongBook function.
+        
+        If user tries to prolong a book he hasn't reserved:
+        :assert: response status code is 401.
+        :assert: reservation wasn't prolonged.
+        """
+
+        reservation = Reservation.query.get(1)
+        end_date = reservation.expected_end_date
+
+        response = client.patch(
+            'users/prolongBook/1',
+            headers = {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + normal_access_token
+            }
+        )
+
+        assert response.status_code == 401
+        assert end_date ==  Reservation.query.filter(
+            Reservation.book_id == 1,
+            Reservation.status == 'STARTED'
+        ).one().expected_end_date
+
+    
+    def test_prolongBook_401_Token_Missing(self, client, db_populate_reservations):
+        """
+        Test the prolongBook function.
+
+        If token is missing:
+        :assert: response status code is 401.
+        :assert: reservation wasn't prolonged.
+        """
+        user = User.query.filter(User.email == 'user@test.com').one()
+        book_id = user.reservations[0].book_id
+
+        end_date = user.reservations[0].expected_end_date
+
+        response = client.patch(
+            'users/prolongBook/' + str(book_id),
+            headers = {
+                'Content-Type': 'application/json'
+            }
+        )
+
+        assert response.status_code == 401
+        assert end_date == Reservation.query.filter(
+            Reservation.reserved_by == user.id,
+            Reservation.book_id == book_id,
+            Reservation.status == 'STARTED'
+        ).one().expected_end_date
 
 
 
