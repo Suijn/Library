@@ -17,7 +17,7 @@ users_schema = UserSchema(many=True)
 @blueprint.route('/users', methods=['GET'])
 @jwt_required()
 @require_role(['Admin'])
-def getUsers():
+def get_users():
     users = User.query.all()
     payload = users_schema.dump(users)
 
@@ -27,7 +27,7 @@ def getUsers():
 @blueprint.route('/user/<id>', methods=['GET'])
 @jwt_required()
 @require_role(['Admin'])
-def getUser(id):
+def get_user(id):
     user = User.get_or_404(id)
     payload = user_schema.dump(user)
 
@@ -37,7 +37,7 @@ def getUser(id):
 @blueprint.route('/user/<id>', methods=['DELETE'])
 @jwt_required()
 @require_role(['Admin'])
-def removeUser(id):
+def remove_user(id):
     user = User.get_or_404(id)
 
     db.session.delete(user)
@@ -50,7 +50,7 @@ def removeUser(id):
 @jwt_required()
 @require_role(['User'])
 @isAdminOrOwner()
-def changeUserEmail(id):
+def change_user_email(id):
     """
     Updates user email.
         An Admin can update every user.
@@ -80,7 +80,7 @@ def changeUserEmail(id):
 @jwt_required()
 @require_role(['User'])
 @isOwner()
-def changeUserPassword(id):
+def change_user_password(id):
     """
     Updates user password.
         Only the owner of the account can update his password.
@@ -104,7 +104,7 @@ def changeUserPassword(id):
 
 
 @blueprint.route('/register', methods=['POST'])
-def registerUser():
+def register_user():
     schema = RegisterSchema()
 
     try:
@@ -155,7 +155,7 @@ def login():
 
 @blueprint.route('/refreshToken', methods=['POST'])
 @jwt_required(refresh=True)
-def refreshToken():
+def refresh_token():
     identity = get_jwt_identity()
     
     access_token = create_access_token(identity = identity)
