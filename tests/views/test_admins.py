@@ -4,7 +4,7 @@ from tests.conftest import admin_access_token
 from bookstore.models import Book
 
 
-def test_get_books_OK(client, admin_access_token, db_populate_books):
+def test_get_books_ok(client, admin_access_token, db_populate_books):
     """
     Test the admin get_books function.
 
@@ -28,7 +28,7 @@ def test_get_books_OK(client, admin_access_token, db_populate_books):
     assert len(response.json) == len(Book.query.all())    
 
 
-def test_get_books_401_Unauthorized(client, normal_access_token, db_populate_books):
+def test_get_books_401_unauthorized(client, normal_access_token, db_populate_books):
     """
     Test the admin get_books function.
 
@@ -45,7 +45,7 @@ def test_get_books_401_Unauthorized(client, normal_access_token, db_populate_boo
     response.status_code == 401
 
 
-def test_add_book_OK(client, admin_access_token):
+def test_add_book_ok(client, admin_access_token):
     """
     Test the add_book function.
 
@@ -79,7 +79,7 @@ def test_add_book_OK(client, admin_access_token):
     ).all())
 
 
-def test_add_book_OK_2(client, admin_access_token):
+def test_add_book_ok_2(client, admin_access_token):
     """
     Test the add_book function.
 
@@ -117,7 +117,7 @@ def test_add_book_OK_2(client, admin_access_token):
     ).all())
 
 
-def test_add_book_400_Unexpected_Field(client, admin_access_token):
+def test_add_book_400_unexpected_field(client, admin_access_token):
     """
     Test the add_book function.
 
@@ -153,7 +153,7 @@ def test_add_book_400_Unexpected_Field(client, admin_access_token):
     ).all())
 
 
-def test_addBook_401_Unauthorized(client, normal_access_token):
+def test_add_book_401_unauthorized(client, normal_access_token):
     """
     Test the addBook function.
 

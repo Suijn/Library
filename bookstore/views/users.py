@@ -17,7 +17,7 @@ books_schema = BookSchema(many=True)
 @blueprint.route('/getReservations', methods=['GET'])
 @jwt_required()
 @require_role()
-def getUserReservations():
+def get_user_reservation():
     """Get current user reservations."""
     current_user = User.get_or_404(get_jwt_identity())
 
@@ -35,7 +35,7 @@ def getUserReservations():
 @blueprint.route('/searchBooks', methods=['POST'])
 @jwt_required()
 @require_role()
-def searchForBooks():
+def search_for_books():
     """
     A search utility for users to search for books by title and author.
     
@@ -73,7 +73,7 @@ def searchForBooks():
 @blueprint.route('/book/<id>', methods=['GET'])
 @jwt_required()
 @require_role()
-def getBook(id):
+def get_book(id):
     """Get a book by ID."""
     book = Book.get_or_404(id)
     payload = book_schema.dump(book)
@@ -84,7 +84,7 @@ def getBook(id):
 @blueprint.route('/reserveBook/<id>', methods=['POST'])
 @jwt_required()
 @require_role()
-def reserveBook(id):
+def reserve_book(id):
     """
     Reserve a book for the given user.
     
