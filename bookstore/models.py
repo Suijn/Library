@@ -135,20 +135,31 @@ class BookSearchSchema(ma.Schema):
 
 class BookSearchSchemaAdmin(ma.Schema):
     """A schema to search for books."""
-    id = fields.Str(required=True)
-    title = fields.Str(required=True)
-    author = fields.Str(required=True)
+    id = fields.Str()
+    title = fields.Str()
+    author = fields.Str()
 
     @validates_schema
-    def validateAtLeastOneFieldFilled(self, data, **kwargs):
+    def validate_at_least_one_field_filled(self, data, **kwargs):
         '''Validates there is at least one field filled.'''
 
+        #If no field is filled - raise Validation error.
         if "id" not in data and "title" not in data and "author" not in data:
             raise ValidationError("No id, title or author.")
-        if not data["id"] and data["title"].isspace() and data["author"].isspace():
-            raise ValidationError("No id, title or author.")
-        if not data["id"] and not data["title"] and not data["author"]:
-            raise ValidationError("No id, title or author.")
+
+        if 'id' in data or 'title' in data or 'author' in data:
+            #Get the number of keys in the dictionary
+            counter = 0
+
+            #Find at least one field filled.
+            for key, value in data.items():
+                if not value.isspace() and value:
+                    counter += 1
+
+            if counter == 0:
+                raise ValidationError("No id, title or author.")
+    
+
 
 
 
