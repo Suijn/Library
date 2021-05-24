@@ -94,10 +94,10 @@ class BookSchema(ma.Schema):
 
 
 class BookUpdateSchema(ma.Schema):
-    title = fields.Str(required=True)
-    author = fields.Str(required=True)
-    pages = fields.Integer(required=True)
-    isReserved = fields.Bool(required=True)
+    title = fields.Str(required=True, load_only=True)
+    author = fields.Str(required=True, load_only=True)
+    pages = fields.Integer(required=True, load_only=True)
+    isReserved = fields.Bool(required=True, load_only=True)
 
 
 class BookSearchSchema(ma.Schema):

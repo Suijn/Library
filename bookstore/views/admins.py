@@ -46,7 +46,7 @@ def add_book():
 
     return payload, 201
 
-@blueprint.route('/book/<id>', methods=['PATCH'])
+@blueprint.route('/book/<id>', methods=['PUT'])
 @jwt_required()
 @require_role(['Admin'])
 def update_book(id):
