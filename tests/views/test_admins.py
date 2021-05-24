@@ -224,7 +224,7 @@ def test_update_book_ok(client, admin_access_token, db_populate_books):
     ).one()
 
 
-def test_update_book_field_missing_title(client, admin_access_token, db_populate_books):
+def test_update_book_400_field_missing_title(client, admin_access_token, db_populate_books):
     """
     Test the update_book function.
 
@@ -260,7 +260,7 @@ def test_update_book_field_missing_title(client, admin_access_token, db_populate
     assert 'title' in response.json
 
 
-def test_update_book_field_missing_author(client, admin_access_token, db_populate_books):
+def test_update_book_400_field_missing_author(client, admin_access_token, db_populate_books):
     """
     Test the update_book function.
 
@@ -298,7 +298,7 @@ def test_update_book_field_missing_author(client, admin_access_token, db_populat
     assert 'author' in response.json
 
 
-def test_update_book_missing_required_field_pages(client, admin_access_token, db_populate_books):
+def test_update_book_400_missing_required_field_pages(client, admin_access_token, db_populate_books):
     """
     Test the update_book function.
 
@@ -335,7 +335,7 @@ def test_update_book_missing_required_field_pages(client, admin_access_token, db
     assert 'pages' in response.json
 
 
-def test_update_book_missing_required_field_isReserved(client, admin_access_token, db_populate_books):
+def test_update_book_400_missing_required_field_isReserved(client, admin_access_token, db_populate_books):
     """
     Test the update_book function.
 
@@ -372,7 +372,7 @@ def test_update_book_missing_required_field_isReserved(client, admin_access_toke
     assert 'isReserved' in response.json
 
 
-def test_update_book_unauthorized(client, normal_access_token, db_populate_books):
+def test_update_book_401_unauthorized(client, normal_access_token, db_populate_books):
     """
     Test the update_book function.
 
@@ -406,3 +406,49 @@ def test_update_book_unauthorized(client, normal_access_token, db_populate_books
             Book.pages == payload['pages'],
             Book.isReserved == payload['isReserved']
         ).one()
+
+
+def test_delete_book_ok(client, admin_access_token, db_populate_books):
+    """
+    Test the delete_book function.
+
+    :assert: response status code is 204.
+    :assert: no response json is returned.
+    :assert: book was deleted.
+    """
+
+    book = Book.query.get(1)
+
+    response = client.delete(
+        'admin/book/' + str(book.id),
+        headers = {
+            'Authorization':'Bearer ' + admin_access_token
+        }
+    )
+
+    assert response.status_code == 204
+    assert not response.json
+    assert not Book.query.get(1)
+
+
+def test_delete_book_401_unauthorized(client, normal_access_token, db_populate_books):
+    """
+    Test the delete_book function.
+
+    If user is unauthorized:
+    :assert: response status code is 401.
+    :assert: book wasn't deleted.
+    """
+    book = Book.query.get(1)
+
+    response = client.delete(
+        'admin/book/' + str(book.id),
+        headers = {
+            'Authorization':'Bearer ' + normal_access_token
+        }
+    )
+
+    assert response.status_code == 401
+    assert Book.query.get(1)
+
+
