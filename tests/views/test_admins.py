@@ -950,5 +950,67 @@ def test_reserve_book_400_user_cannot_reserve_more_books(client,admin_access_tok
         assert not reservation
 
 
+def test_cancel_reservation_ok(client, admin_access_token, db_populate_books, db_populate_reservations):
+    """
+    Test the cancel reservation function.
+
+    :assert: response status code is 204.
+    :assert: no content in response.
+    :assert: reservation is cancelled.
+    """
+    book = Book.get_or_404(1)
+    
+    response = client.patch(
+        f'admin/cancelResBook/{book.id}',
+        headers={
+            'Authorization': f'Bearer {admin_access_token}'
+        }
+    )
+
+    assert response.status_code == 204
+    assert not response.json
+
+    reservation = Reservation.query.filter(
+        Reservation.book_id == book.id,
+        Reservation.status == "FINISHED"
+    ).one()
+    assert reservation
+
+    with pytest.raises(NoResultFound):
+        assert not Reservation.query.filter(
+            Reservation.book_id == book.id,
+            Reservation.status == "STARTED"   
+        ).one()
+
+
+def test_cancel_reservation_401_unauthorized(client, normal_access_token, db_populate_books, db_populate_reservations):
+    """
+    Test the cancel reservation function.
+    
+    :assert: response status code is 401.
+    :assert: reservation is not cancelled.
+    """
+    book = Book.get_or_404(1)
+    
+    response = client.patch(
+        f'admin/cancelResBook/{book.id}',
+        headers={
+            'Authorization': f'Bearer {normal_access_token}'
+        }
+    )
+
+    assert response.status_code == 401
+    reservation = Reservation.query.filter(
+        Reservation.book_id == book.id,
+        Reservation.status == "STARTED"
+    ).one()
+
+    assert reservation 
+    with pytest.raises(NoResultFound):
+        assert not Reservation.query.filter(
+            Reservation.book_id == book.id,
+            Reservation.status == "FINISHED"   
+        ).one() 
+
 
 
