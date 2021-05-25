@@ -16,8 +16,6 @@ roles_users = db.Table('roles_users',
 )
 
 
-
-
 class Role(db.Model):
     """A role for users."""
     __tablename__ = 'roles'

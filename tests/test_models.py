@@ -1,8 +1,11 @@
 """Model unit tests."""
 from re import T
+
+import pytest
 from bookstore.users.models import User, Role, roles_users
 from bookstore.models import Book, Reservation
 from bookstore.extensions import db
+from sqlalchemy.exc import IntegrityError
 
 class TestUser:
     """User tests."""
@@ -66,6 +69,14 @@ class TestUser:
         assert normal_user.has_roles(['User', 'Admin']) is False
     
 
+    def test_email_unique(self, db_populate): 
+        db.session.add(User(password='password',email='email0@test.com'))
+        db.session.add(User(password='password',email='email0@test.com'))
+
+        with pytest.raises(IntegrityError):
+            db.session.commit()
+
+
 class TestBook:
     """Book model tests."""
 
@@ -89,3 +100,7 @@ class TestBook:
         book_returned = Book.get_or_404(book.id)
         assert book_returned.isReserved == False
         assert book_returned.pages == 0
+
+
+class TestReservation:
+    pass
