@@ -1,5 +1,7 @@
 """Model unit tests."""
+from re import T
 from bookstore.users.models import User, Role, roles_users
+from bookstore.models import Book, Reservation
 from bookstore.extensions import db
 
 class TestUser:
@@ -18,7 +20,7 @@ class TestUser:
     
     def test_default_fields(self, db_populate):
         """Test the default fields."""
-        user = User.get_or_404(1)
+        user = User.get_or_404(3)
 
         assert user.books_amount == 0
         assert user.has_role('User')
@@ -63,3 +65,27 @@ class TestUser:
         assert admin_user.has_roles(['User', 'Admin']) is True
         assert normal_user.has_roles(['User', 'Admin']) is False
     
+
+class TestBook:
+    """Book model tests."""
+
+
+    def test_get_or_404(self):
+        """Test the get_or_404 method."""
+        book = Book(title = 'title1', author='author1')
+        db.session.add(book)
+        db.session.commit()
+
+        book_returned = Book.get_or_404(book.id)
+        assert book == book_returned 
+    
+
+    def test_default_fields(self):
+        """Test the default fields."""
+        book = Book(title = 'title1', author='author1')
+        db.session.add(book)
+        db.session.commit()
+
+        book_returned = Book.get_or_404(book.id)
+        assert book_returned.isReserved == False
+        assert book_returned.pages == 0

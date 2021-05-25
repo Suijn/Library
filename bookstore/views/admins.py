@@ -35,7 +35,7 @@ def add_book():
     title = request.json['title'] 
     author = request.json['author']
 
-    book = Book(title, author)
+    book = Book(title=title, author=author)
     if 'pages' in request.json:
         book.pages = request.json['pages']
     

@@ -71,12 +71,12 @@ def db_populate_books(db):
 
     #Create books.
     books = [
-        Book('Book1', 'Author1'),
-        Book('Book2', 'Author1'),
-        Book('Book3', 'Author1'),
-        Book('Book4', 'Author2'),
-        Book('Book5', 'Author2'),
-        Book('Book6', 'Author3'),
+        Book(title='Book1', author='Author1'),
+        Book(title='Book2', author='Author2'),
+        Book(title='Book3', author='Author2'),
+        Book(title='Book4', author='Author3'),
+        Book(title='Book5', author='Author3'),
+        Book(title='Book6', author='Author4'),
     ]
     
     db.session.add_all(books)

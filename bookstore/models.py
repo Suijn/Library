@@ -21,16 +21,9 @@ class Book(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(), nullable=False)
     author = db.Column(db.String(), nullable=False)
-    pages = db.Column(db.Integer, nullable=True)
+    pages = db.Column(db.Integer, default =0)
     isReserved = db.Column(db.Boolean, default=False)
     reservation = db.relationship('Reservation', backref='book')
-
-
-    def __init__(self, title, author, pages = 0, isReserved = False):
-        self.title = title
-        self.author = author
-        self.pages = pages
-        self.isReserved = isReserved
 
 
     def __repr__(self):
@@ -38,7 +31,7 @@ class Book(db.Model):
     
     
     def __str__(self):
-        return f'id: {self.id}, title: {self.title}'
+        return f'id: {self.id}, title: {self.title}, pages: {self.pages}, isReserved: {self.isReserved}'
 
     
     @classmethod
@@ -53,10 +46,6 @@ class Book(db.Model):
             print(book)
             abort(404)
         return book
-    
-    def __init__(self, title, author):
-        self.title = title
-        self.author = author
 
 
 class Reservation(db.Model):
