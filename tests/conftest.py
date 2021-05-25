@@ -39,26 +39,26 @@ def db_populate(db):
     """Populate the database with mock user data."""
     
     #Create roles
-    user_role = Role('User')
-    admin_role = Role('Admin')
+    user_role = Role(name='User')
+    admin_role = Role(name='Admin')
 
     db.session.add(user_role)
     db.session.add(admin_role)
     db.session.commit()
 
     #Create an admin user.
-    admin = User("password", "admin@test.com")
+    admin = User(password="password", email="admin@test.com")
     admin.roles.append(admin_role)
 
     db.session.add(admin)
 
     #Create normal users.
     users = [
-        User("password", "user@test.com"),
-        User('password', 'user2@test.com'),
-        User('password', 'user3@test.com'),
-        User('password', 'user4@test.com'),
-        User('password', 'user5@test.com')
+        User(password="password", email="user@test.com"),
+        User(password='password', email='user2@test.com'),
+        User(password='password', email='user3@test.com'),
+        User(password='password', email='user4@test.com'),
+        User(password='password', email='user5@test.com')
     ]
 
     db.session.add_all(users)

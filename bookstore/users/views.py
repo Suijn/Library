@@ -123,7 +123,7 @@ def register_user():
         db.session.add(role)
         db.session.commit()
 
-    user = User(password, email)
+    user = User(password=password, email=email)
 
     db.session.add(user)
     db.session.commit()

@@ -21,15 +21,15 @@ def create_admin_user(email, password):
     try:
         admin_role = Role.query.filter_by(name='Admin').one()
     except NoResultFound as err:
-        admin_role = Role('Admin')
+        admin_role = Role(name='Admin')
         
 
     try:
         user_role = Role.query.filter_by(name='User').one()
     except NoResultFound as err:
-        user_role = Role('User')    
+        user_role = Role(name='User')    
 
-    admin = User(password, email)
+    admin = User(password=password, email=email)
     admin.roles.append(admin_role)
 
     db.session.add(admin)
@@ -50,7 +50,7 @@ def create_role(role_name):
         #If found, do nothing.
         role = Role.query.filter_by(name=role_name).one() 
     except NoResultFound as err:
-        role = Role(role_name)
+        role = Role(name=role_name)
         db.session.add(role)
         db.session.commit()
 

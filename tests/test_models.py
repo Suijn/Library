@@ -10,7 +10,7 @@ class TestUser:
 
     def test_get_or_404_ok(self, db_populate):
         """Get user by ID."""
-        user = User('password', 'email@test.com')
+        user = User(password='password', email='email@test.com')
         db.session.add(user)
         db.session.commit()
 
@@ -28,7 +28,7 @@ class TestUser:
     
     def test_check_password(self, db_populate):
         """Test that check_password method works properly."""
-        user = User('password', 'email@test.com')
+        user = User(password='password', email='email@test.com')
 
         assert user.check_password('password') is True
         assert user.check_password('bawrsdfa') is False 

@@ -1,4 +1,5 @@
 """Models module."""
+from os import name
 from ..extensions import db, ma
 from sqlalchemy.orm import backref, load_only, relationship
 from ..extensions import (bcrypt)
@@ -24,11 +25,11 @@ class Role(db.Model):
     name = db.Column(db.String(), unique=True, nullable=False)
     users = db.relationship("User", secondary=roles_users, backref='roles')
 
-
-    def __init__(self, name):
-        self.name = name
-
     
+    def __str__(self):
+        return f'Role: {name}'
+
+
     def __repr__(self):
         return f'{self.__class__}'
 
@@ -50,9 +51,9 @@ class User(db.Model):
     books_amount = db.Column(db.Integer, default=0, nullable=False)
     reservations = db.relationship("Reservation", backref='user')
 
-    def __init__(self, password, email):
-        self.set_password(password)
-        self.email = email
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.set_password(kwargs['password'])
         user_role = Role.query.filter(Role.name == 'User').one()
         self.roles.append(user_role)
 
