@@ -1,5 +1,6 @@
 """Model unit tests."""
 from re import T
+import re
 
 import pytest
 from bookstore.users.models import User, Role, roles_users
@@ -103,4 +104,17 @@ class TestBook:
 
 
 class TestReservation:
-    pass
+    
+
+    def test_default_fields(self, db_populate,db_populate_reservations):
+        """Test default fields."""
+        from datetime import date
+        from bookstore.utils import calculate_end_date
+
+        reservation = Reservation.query.get(1)
+
+        assert reservation.status == 'STARTED'
+        assert reservation.was_prolonged == False
+        assert reservation.actual_end_date == None
+        assert reservation.start_date == date.today()
+        assert reservation.expected_end_date == calculate_end_date(date.today())
