@@ -1,10 +1,13 @@
 """A module for testing the functionality of views/admins.py"""
 import json
 import re
+
+from sqlalchemy.sql.selectable import subquery
 from tests.conftest import admin_access_token
-from bookstore.models import Book, BookSchema
+from bookstore.models import Book, BookSchema, Reservation
 import pytest
 from sqlalchemy.exc import NoResultFound
+from bookstore.users.models import User
 
 book_schema = BookSchema()
 
@@ -815,3 +818,137 @@ def test_search_for_books_401_unauthorized(client, normal_access_token, db_popul
     )
 
     assert response.status_code == 401
+
+
+def test_reserve_book_ok(client, admin_access_token, db_populate_books):
+    """
+    Test the reserve_book function.
+
+    :assert: response status code is 204.
+    :assert: no content is returned.
+    :assert: reservation was created.
+    """
+    book = Book.get_or_404(1)
+    user = User.get_or_404(1)
+
+    response = client.post(
+        f'admin/reserveBook/{book.id}/{user.id}',
+        headers={
+            'Authorization': f'Bearer {admin_access_token}'
+        }
+    )
+
+    assert response.status_code == 204
+    assert not response.json
+
+    reservation = Reservation.query.filter(
+        Reservation.book_id == book.id,
+        Reservation.reserved_by == user.id,
+        Reservation.status == 'STARTED'
+    ).one()
+
+    assert reservation
+
+
+def test_reserve_book_401_unauthorized(client, normal_access_token, db_populate_books):
+    """
+    Test the reserve_book function.
+    
+    If user is unauthorized:
+    :assert: response status code is 401.
+    :assert: reservation is not created.
+    """
+
+    book = Book.get_or_404(1)
+    user = User.get_or_404(1)
+
+    response = client.post(
+        f'admin/reserveBook/{book.id}/{user.id}',
+        headers={
+            'Authorization': f'Bearer {normal_access_token}'
+        }
+    )
+
+    assert response.status_code == 401
+    with pytest.raises(NoResultFound):
+        reservation = Reservation.query.filter(
+            Reservation.book_id == book.id,
+            Reservation.reserved_by == user.id,
+            Reservation.status == 'STARTED'
+        ).one()
+        assert not reservation
+
+
+def test_reserve_book_400_book_already_reserved(client, admin_access_token, db_populate_books, db_populate_reservations):
+    """
+    Test the reserve book function.
+
+    If book is already reserved:
+    :assert: response status code is 400.
+    :assert: reservation is not created.
+    """
+
+    book = Book.get_or_404(1)
+    user = User.get_or_404(1)
+
+    reservation_before = Reservation.query.filter(
+        Reservation.book_id == book.id,
+        Reservation.status == 'STARTED'
+    ).one()
+    assert reservation_before
+
+    response = client.post(
+        f'admin/reserveBook/{book.id}/{user.id}',
+        headers={
+            'Authorization': f'Bearer {admin_access_token}'
+        }
+    )
+    assert response.status_code == 400
+
+    #Assert reservations are not changed.
+    reservation_after = Reservation.query.filter(
+        Reservation.book_id == book.id,
+        Reservation.status == 'STARTED'
+    ).one()
+    assert reservation_before == reservation_after
+
+
+def test_reserve_book_400_user_cannot_reserve_more_books(client,admin_access_token,reserve_five_books):
+    """
+    Test the reserve_book function.
+
+    If user cannot reserve more books (user has 5 reservations with status = 'STARTED'):
+    :assert: response status code is 400.
+    :assert: reservation is not created.
+    """
+    from sqlalchemy import func
+
+    #Get user with 5 reservations.
+    user  = User.query.join(Reservation).filter(
+        Reservation.status == 'STARTED'
+    ).group_by(Reservation.reserved_by
+    ).having(func.count(Reservation.reserved_by) == 5).one()
+
+    #Get a book that is not reserved.
+    book = Book.query.filter(
+        Book.isReserved == False
+    ).first()
+
+    response = client.post(
+        f'admin/reserveBook/{book.id}/{user.id}',
+        headers={
+            'Authorization': f'Bearer {admin_access_token}'
+        }
+    )
+    assert response.status_code  == 400
+    with pytest.raises(NoResultFound):
+        reservation = Reservation.query.filter(
+            Reservation.book_id == book.id,
+            Reservation.reserved_by == user.id,
+            Reservation.status == 'STARTED'
+        ).one()
+        assert not reservation
+
+
+
+

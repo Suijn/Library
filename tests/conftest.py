@@ -101,6 +101,28 @@ def db_populate_reservations(db_populate_books, db):
         db.session.add(res)
     db.session.commit()
 
+
+@pytest.fixture()
+def reserve_five_books(db,db_populate, db_populate_books):
+    """
+    Populates the test database with 5 reservations created for one single user.
+    """
+
+    books = db.session.query(Book).all()
+    user = db.session.query(User).filter(User.email == 'user@test.com').one()
+
+    for x in range(5):
+        res = Reservation()
+        res.book = books[x]
+        res.user = user
+
+        books[x].isReserved = True
+        user.books_amount += 1
+
+        db.session.add(res)
+    db.session.commit()
+
+
 @pytest.fixture()
 def client(app, db_populate):
     with app.test_client() as client:
