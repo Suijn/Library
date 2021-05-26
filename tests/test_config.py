@@ -1,13 +1,13 @@
 """A test module to validate tests configuration."""
 from bookstore.users.models import User
-
+import os
 
 def test_app_config(app, db):
     """Test app configuration."""
     assert app.config['TESTING']
     assert db
     assert app.config['SQLALCHEMY_DATABASE_URI'] != 'sqlite:///db'
-    assert app.secret_key == 'secret key'
+    assert app.secret_key == os.environ.get("SECRET_KEY")
 
 
 def test_db(db_populate):
