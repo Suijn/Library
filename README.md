@@ -10,7 +10,7 @@ After successfully registering an account and logging in users can:
 - search for books by book title and author.
 - reserve up to 5 books (user can reserve a book for 30 days)
 - change email address and password.
-- view own reservations and deadlines until which books must be returned.
+- view their reservations and deadlines until which books must be returned.
 - prolong book reservations (each book reservation can be prolonged only once, for a duration of 30 days)
 ##### Admin
 An admin can:
