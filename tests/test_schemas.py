@@ -1,10 +1,13 @@
 """A test module for testing marshmallow schemas."""
+from os import error
 import pytest
-from bookstore.users.models import RegisterSchema
+from bookstore.users.models import LoginSchema, RegisterSchema
 from bookstore.users.models import User, Role
+from bookstore.extensions import db
+
 
 class TestRegisterSchema:
-    """Test the register schema."""
+    """Test register schema."""
 
     @pytest.fixture(scope='class')
     def schema(self):
@@ -107,5 +110,81 @@ class TestRegisterSchema:
         assert errors['email']
 
 
+class TestLoginSchema:
+    """Test login schema."""
 
+
+    @pytest.fixture(autouse=True)
+    def set_up(self, db_populate):
+        """
+        A fixture to call db_populate fixture automatically on every test function in this class.
+        """
+
+
+    @pytest.fixture(scope='class')
+    def schema(self):
+        """Return schema."""
+        return LoginSchema()
+
+    
+    def test_validation_ok(self, schema):
+        """
+        Test schema with valid data.
+        
+        :assert: schema returns no errors.
+        """
+
+        data = {
+            'email': 'user@test.com',
+            'password': 'password'
+        }
+        errors = schema.validate(data)
+        assert not errors
+
+    
+    def test_validation_incorrect_email(self, schema):
+        """
+        Test incorrect email against schema validation.
+        """
+
+        data = {
+            'email': 'very@incorrect_email.com',
+            'password': 'password'
+        }
+
+        errors = schema.validate(data)
+        assert errors
+        assert 'email' in errors
+
+    
+
+    def test_validation_wrong_credentials(self, schema):
+        """
+        Test incorrect login credentials against schema validation.
+        """
+        data = {
+            'email': 'user@test50.com',
+            'password': 'password'
+        }
+
+        errors = schema.validate(data)
+        assert errors
+        assert '_schema' in errors
+
+    
+    def test_validation_wrong_credentials_2(self, schema):
+        """
+        Test incorrect data against schema validation.
+        """
+        data = {
+            'email': 'user@test.com',
+            'password': 'incorrectpassword'
+        }
+
+        errors = schema.validate(data)
+        assert errors
+        assert '_schema' in errors
+
+
+    
 

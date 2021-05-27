@@ -24,7 +24,7 @@ def db(app):
     """Yield db and tear it down."""
     db, db_path = tempfile.mkstemp()
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///'+ db_path
-
+    print('DB SETUP')
     with app.app_context():
         database.create_all()
         yield database
