@@ -99,7 +99,7 @@ class TestRegisterSchema:
         data = {
             'email': f'{user_email}',
             'password': 'password',
-            'password_confirmation': "sdasfs"
+            'password_confirmation': "password"
         }
         
         errors = schema.validate(data)
