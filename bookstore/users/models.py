@@ -142,7 +142,6 @@ class UserSchema(ma.Schema):
     id = fields.Integer()
     email = fields.Email()
     books_amount = fields.Integer()
-    # roles = fields.Nested("RoleSchema", many=True)
     roles = fields.Nested(RoleSchema, many=True)
 
     @validates('email')

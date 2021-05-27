@@ -1,7 +1,7 @@
 """A test module for testing marshmallow schemas."""
 from os import error
 import pytest
-from bookstore.users.models import LoginSchema, RegisterSchema
+from bookstore.users.models import LoginSchema, RegisterSchema, UpdatePasswordSchema
 from bookstore.users.models import User, Role
 from bookstore.extensions import db
 
@@ -157,7 +157,6 @@ class TestLoginSchema:
         assert 'email' in errors
 
     
-
     def test_validation_wrong_credentials(self, schema):
         """
         Test incorrect login credentials against schema validation.
@@ -186,5 +185,67 @@ class TestLoginSchema:
         assert '_schema' in errors
 
 
-    
+class TestUpdatePasswordSchema:
+    """Test update password schema."""
 
+
+    @pytest.fixture(autouse=True)
+    def set_up(self, db_populate):
+        """
+        A set up fixture to call db_populate on every test function of this class.
+        """
+    
+    @pytest.fixture()
+    def schema(self, app):
+        """
+        Create a mock user and pass it to the schema. 
+        Return UpdatePasswordSchema.
+        """
+        user = User(password='password', email='test@email.com')
+
+        return UpdatePasswordSchema(user=user)
+
+
+    def test_validate_ok(self, schema):
+        """Test schema with correct data."""
+
+        data = {
+            'password':'newpassword',
+            'password_confirmation': 'newpassword'
+        }
+
+        errors = schema.validate(data)
+        assert not errors
+
+    
+    def test_validate_password_must_match(self, schema):
+        """
+        Assert schema raises validation error when passwords don't match.
+        """
+
+        data = {
+            'password':'newpassword',
+            'password_confirmation': 'somedifferentpassword'
+        }
+
+        errors = schema.validate(data)
+        assert errors
+        assert errors['_schema']
+        assert errors['_schema'][0] == 'Passwords must match'
+
+
+    def test_validate_password_is_different(self, schema):
+        """
+        If the new password is the same as the previous one:
+        :assert: schema raises validation error.
+        """
+
+        data = {
+            'password': 'password',
+            'password_confirmation': 'password'
+        }
+
+        errors = schema.validate(data)
+        assert errors
+        assert errors['_schema']
+        assert errors['_schema'][0] == "Password must be different from the previous one."
