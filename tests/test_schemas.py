@@ -1,6 +1,5 @@
 """A test module for testing marshmallow schemas."""
-from bookstore.models import Book, BookUpdateSchema, Reservation, ReservationSchema
-from os import error
+from bookstore.models import Book, BookSchema, BookUpdateSchema, Reservation, ReservationSchema
 import pytest
 from bookstore.users.models import LoginSchema, RegisterSchema, UpdatePasswordSchema
 from bookstore.users.models import User, Role
@@ -359,6 +358,23 @@ class TestBookUpdateSchema:
         assert errors['isReserved']
 
     
+    def test_validation_unexpected_field(self, schema):
+        """
+        Test schema validation with invalid data.
+        :assert: schema returns an error.
+        """
+        data = {
+            'title': 'title',
+            'author': 'author',
+            'pages': 111,
+            'isReserved': False,
+            'unexpected_field': 'unexpected_value'
+        }
+        errors = schema.validate(data)
+        assert errors
+        assert errors['unexpected_field']
+
+    
     def test_schema_dump_empty(self, schema, db_populate_books):
         """
         Test schema dump returns an empty list.
@@ -368,4 +384,87 @@ class TestBookUpdateSchema:
         dumped_book = schema.dump(book)
         assert not dumped_book
         
+
+class TestBookSchema:
+    """Test book schema."""
+
+    @pytest.fixture(scope='class')
+    def schema(self):
+        return BookSchema()
+    
+
+    def test_load_ok(self, schema):
+        """
+        Test schema with proper data.
+        :assert: no errors are returned.
+        """
+
+        data = {
+            'title':'title',
+            'author':'author'
+        }
+        errors = schema.validate(data)
+        assert not errors
+
+    
+    def test_load_ok_unrequired_fields(self, schema):
+        """
+        Test schema with data with unrequired fields.
+        :assert: schema raises no exceptions.
+        """
+        data = {
+            'title':'title',
+            'author':'author',
+            'pages': 111,
+        }
+        errors = schema.validate(data)
+        assert not errors
+    
+
+    def test_load_field_dump_only(self, schema):
+        """
+        Test schema loading.
+        :assert: schema raises an exception if a dump_only field is passed.
+        """
+        data = {
+            'title':'title',
+            'author':'author',
+            'pages': 111,
+            'isReserved': True
+        }
+        errors = schema.validate(data)
+        assert errors
+        assert errors['isReserved']
+
+    
+    def test_load_unexpected_field(self, schema):
+        """
+        Test schema returns an exception if unexpected fields are provided.
+        """
+        data = {
+            'title':'title',
+            'author':'author',
+            'unexpected_field':'unexpected_value'
+        }
+        errors = schema.validate(data)
+        assert errors
+        assert errors['unexpected_field']
+    
+
+    def test_dump(self, schema, db_populate_books):
+        """
+        Test schema dumping.
+        :assert: schema returns proper data.
+        """
+        book = Book.get_or_404(1)
+
+        keys_expected = ['id', 'title', 'author', 'pages', 'isReserved']
+        keys_returned = schema.dump(book).keys()
+
+        assert len(keys_expected) == len(keys_returned)
+        assert set(keys_expected).issubset(set(keys_returned))
+        
+
+
+
 
