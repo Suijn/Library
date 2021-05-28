@@ -1,4 +1,5 @@
 """A test module for testing marshmallow schemas."""
+from bookstore.models import Book, BookUpdateSchema, Reservation, ReservationSchema
 from os import error
 import pytest
 from bookstore.users.models import LoginSchema, RegisterSchema, UpdatePasswordSchema
@@ -249,3 +250,122 @@ class TestUpdatePasswordSchema:
         assert errors
         assert errors['_schema']
         assert errors['_schema'][0] == "Password must be different from the previous one."
+
+
+class TestReservationSchema:
+    """Test reservation schema."""
+
+    
+    def test_schema_dump(self, db_populate, db_populate_reservations):
+        """
+        Test schema dump output.
+        """
+        reservation = Reservation.query.get(1)
+        schema = ReservationSchema()
+
+        keys_expected = [
+            'book_id','reserved_by', 'status','start_date','expected_end_date','was_prolonged'
+        ]
+        keys_returned = [x for x in schema.dump(reservation).keys()]
+
+        assert len(keys_expected) == len(keys_returned)
+        assert set(keys_expected).issubset(set(keys_returned))
+
+
+class TestBookUpdateSchema:
+    """Test book update chema."""
+
+
+    @pytest.fixture(scope='class')
+    def schema(self):
+        """Return book update schema."""
+        return BookUpdateSchema()
+
+    
+    def test_validation_ok(self, schema):
+        """
+        Test schema validation with valid data.
+        :assert: schema returns no errors.
+        """
+        data = {
+            'title': 'title',
+            'author': 'author',
+            'pages': 111,
+            'isReserved': False
+        }
+
+        errors = schema.validate(data)
+        assert not errors
+    
+
+    def test_validation_missing_field_title(self, schema):
+        """
+        Test schema validation with invalid data.
+        :assert: schema returns an error.
+        """
+
+        data = {
+            'author': 'author',
+            'pages': 111,
+            'isReserved': False
+        }
+        errors = schema.validate(data)
+        assert errors
+        assert errors['title']
+
+    
+    def test_validation_missing_field_author(self, schema):
+        """
+        Test schema validation with invalid data.
+        :assert: schema returns an error.
+        """
+        data = {
+            'title': 'title',
+            'pages': 111,
+            'isReserved': False
+        }
+        errors = schema.validate(data)
+        assert errors
+        assert errors['author']
+    
+
+    def test_validation_missing_field_pages(self, schema):
+        """
+        Test schema validation with invalid data.
+        :assert: schema returns an error.
+        """
+        data = {
+            'title': 'title',
+            'author': 'author',
+            'isReserved': False
+        }
+        errors = schema.validate(data)
+        assert errors
+        assert errors['pages']
+
+    
+    def test_validation_missing_field_isReserved(self, schema):
+        """
+        Test schema validation with invalid data.
+        :assert: schema returns an error.
+        """
+        data = {
+            'title': 'title',
+            'author': 'author',
+            'pages': 111,
+        }
+        errors = schema.validate(data)
+        assert errors
+        assert errors['isReserved']
+
+    
+    def test_schema_dump_empty(self, schema, db_populate_books):
+        """
+        Test schema dump returns an empty list.
+        """
+        book = Book.get_or_404(1)
+
+        dumped_book = schema.dump(book)
+        assert not dumped_book
+        
+

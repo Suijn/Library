@@ -69,6 +69,7 @@ class ReservationSchema(ma.Schema):
 
 
 class BookSchema(ma.Schema):
+    """A book schema."""
     id = fields.Integer()
     title = fields.Str(required=True)
     author = fields.Str(required=True)
@@ -77,6 +78,7 @@ class BookSchema(ma.Schema):
 
 
 class BookUpdateSchema(ma.Schema):
+    """A book update schema."""
     title = fields.Str(required=True, load_only=True)
     author = fields.Str(required=True, load_only=True)
     pages = fields.Integer(required=True, load_only=True)
