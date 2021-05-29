@@ -2,7 +2,7 @@ from json import dump
 from sqlalchemy.sql.operators import nullsfirst_op
 from .extensions import db, ma
 from sqlalchemy.orm import backref, load_only, relationship
-from marshmallow import Schema, fields, validates, ValidationError,validates_schema
+from marshmallow import Schema, fields, validates, ValidationError,validates_schema,pre_load
 from flask import abort
 from datetime import date
 from sqlalchemy import CheckConstraint
@@ -87,36 +87,38 @@ class BookUpdateSchema(ma.Schema):
 
 class BookSearchSchema(ma.Schema):
     """A schema to search for books."""
-    title = fields.Str(default='', load_only=True)
-    author = fields.Str(default='', load_only=True)
+    title = fields.Str(missing='', load_only=True)
+    author = fields.Str(missing='', load_only=True)
+
+    @pre_load
+    def trim_leading_trailing_whitespaces(self, data, **kwargs):
+        """
+        Remove leading and trailing whitespaces from the data before loading the schema.
+        """
+        if not data:
+            raise ValidationError("No title or author.")  
+
+        for key, value in data.items():
+            data[key] = value.strip()
+        return data  
+    
 
     @validates_schema
     def validateAtLeastOneFieldFilled(self, data, **kwargs):
-        '''
-        Validates there is at least one field filled.
-        
-        If there is only only one field filled, check:
-            If it consists of only whitespaces - raise Validation error.
-            If it is empty - raise Validation error.
-        '''
+        '''Validates there is at least one field filled.'''
 
-        if "title" not in data and "author" not in data:
+        if not data['title'] and not data['author']:
             raise ValidationError("No title or author.")
-        
-        if "title" or "author" in data:
-            #There is only one item in the dictionary.
-            for field, value in data.items():
-                #If value consists of only whitespaces or is empty - raise Validation error.
-                if value.isspace() or not value:
-                    raise ValidationError("No title or author.")     
+        else:
+            #Assert there is at least one field filled, otherwise raise validation error.
+            counter = 0
+            for key, value in data.items():
+                if not value.isspace() and value:
+                    counter += 1
 
-        if "title" in data and "author" in data:
-            #Raise Validation error if both fields consist of only whitespaces.
-            if data["title"].isspace() and data["author"].isspace():
+            if counter == 0:
                 raise ValidationError("No title or author.")
-            #Raise Validation error if both fields are empty.
-            if not data["title"] and not data["author"]:
-                raise ValidationError("No title or author.")
+
 
 class BookSearchSchemaAdmin(ma.Schema):
     """A schema to search for books."""
@@ -136,7 +138,7 @@ class BookSearchSchemaAdmin(ma.Schema):
             #Get the number of keys in the dictionary
             counter = 0
 
-            #Find at least one field filled.
+            #Assert, there is at least one field filled, otherwise raise validation error.
             for key, value in data.items():
                 if not value.isspace() and value:
                     counter += 1

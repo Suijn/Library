@@ -1,5 +1,5 @@
 """A test module for testing marshmallow schemas."""
-from bookstore.models import Book, BookSchema, BookUpdateSchema, Reservation, ReservationSchema
+from bookstore.models import Book, BookSchema, BookSearchSchema, BookUpdateSchema, Reservation, ReservationSchema
 import pytest
 from bookstore.users.models import LoginSchema, RegisterSchema, UpdatePasswordSchema
 from bookstore.users.models import User, Role
@@ -390,6 +390,7 @@ class TestBookSchema:
 
     @pytest.fixture(scope='class')
     def schema(self):
+        """Return book schema."""
         return BookSchema()
     
 
@@ -465,6 +466,140 @@ class TestBookSchema:
         assert set(keys_expected).issubset(set(keys_returned))
         
 
+class TestBookSearchSchema:
+    """Test book search schema."""
+
+    @pytest.fixture(scope='class')
+    def schema(self):
+        """Return book search schema."""
+        return BookSearchSchema()
 
 
+    def test_load_fills_if_field_empty(self, schema):
+        """
+        Test schema loading.
+        :assert: schema fills title and author fields with a '' if these are empty.
+        """
+        data = {
+            'title':'title'
+        }
+        loaded_data = schema.load(data)
+        keys_expected = ['title', 'author']
+        keys_returned = loaded_data.keys()
+        
+        assert len(keys_expected) == len(keys_returned)
+        assert set(keys_expected).issubset(set(keys_returned))
+        assert loaded_data['author'] == ''
+        assert loaded_data['title'] == data['title']
 
+        data = {
+            'author':'author'
+        }
+
+        loaded_data = schema.load(data)
+        keys_expected = ['title', 'author']
+        keys_returned = loaded_data.keys()
+
+        assert len(keys_expected) == len(keys_returned)
+        assert set(keys_expected).issubset(set(keys_returned))
+        assert loaded_data['title'] == ''
+        assert loaded_data['author'] == 'author'
+
+
+    
+    def test_load_ok(self, schema):
+        """
+        Test schema loading.
+        :assert: no errors are returned if valid data is provided.
+        """
+        data = {
+            'title': 'title',
+            'author': 'author'
+        }
+
+        errors = schema.validate(data)
+        assert not errors
+
+    def test_load_only_author(self, schema):
+        """
+        Test schema loading.
+        :assert: no exceptions are returned if valid data is provided.
+        """
+        data = {
+            'author':'author'
+        }
+        errors = schema.validate(data)
+        assert not errors
+
+    
+    def test_load_only_title(self, schema):
+        """
+        Test schema loading.
+        :assert: no exceptions are returned if valid data is provided. 
+        """
+        data = {
+            'title':'title'
+        }
+        errors = schema.validate(data)
+        assert not errors
+    
+    
+    def test_load_unexpected_field(self, schema):
+        """
+        Test schema loading.
+        :assert: schema raises exception if there's an unexpected field in the data.
+        """
+        data = {
+            'title':'title',
+            'author':'author',
+            'unexpected_field':'unexpected_value'
+        }
+        errors = schema.validate(data)
+        assert errors
+        assert errors['unexpected_field']
+
+    
+    def test_load_both_fields_only_spaces(self, schema):
+        """
+        Test schema loading.
+        :assert: schema raises an exception if both fields consist of only whitespaces.
+        """
+        data = {
+            'title':'    ',
+            'author':'    '
+        }
+        errors = schema.validate(data)
+        assert errors
+        assert errors['_schema']
+        assert errors['_schema'][0] == 'No title or author.'
+
+    
+    def test_load_field_empty(self, schema):
+        """
+        Test schema loading.
+        :assert: schema raises an exception if there is only one field and it is empty.
+        """
+
+        data = {
+            'title':''
+        }
+        errors = schema.validate(data)
+        assert errors
+        assert errors['_schema']
+        assert errors['_schema'][0] == 'No title or author.'
+
+
+    def test_remove_leading_trailing_whitespaces(self, schema):
+        """
+        Test schema removes leading and trailing whitespaces in the data.
+        """
+        data = {
+            'title': '  title  ',
+            'author': '  author  '
+        }
+        errors = schema.validate(data)
+        assert not errors
+        
+        loaded_data = schema.load(data)
+        assert loaded_data['title'] == 'title'
+        assert loaded_data['author'] == 'author'
