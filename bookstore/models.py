@@ -122,9 +122,9 @@ class BookSearchSchema(ma.Schema):
 
 class BookSearchSchemaAdmin(ma.Schema):
     """A schema to search for books."""
-    id = fields.Int()
-    title = fields.Str()
-    author = fields.Str()
+    id = fields.Int(load_only=True)
+    title = fields.Str(load_only=True)
+    author = fields.Str(load_only=True)
 
 
     @pre_load
