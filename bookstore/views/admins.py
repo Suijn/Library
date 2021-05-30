@@ -104,7 +104,7 @@ def search_for_books():
     #If id is filled, then the search function returns the book with the given id.
     if 'id' in request.json:
         if request.json['id']:
-            book_id = int(request.json['id'])
+            book_id = request.json['id']
             book = Book.get_or_404(book_id)
             payload = book_schema.dump(book)
             return payload, 200

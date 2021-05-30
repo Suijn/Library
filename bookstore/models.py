@@ -122,7 +122,7 @@ class BookSearchSchema(ma.Schema):
 
 class BookSearchSchemaAdmin(ma.Schema):
     """A schema to search for books."""
-    id = fields.Str()
+    id = fields.Int()
     title = fields.Str()
     author = fields.Str()
 
@@ -133,10 +133,11 @@ class BookSearchSchemaAdmin(ma.Schema):
         Remove leading and trailing whitespaces from the data before loading the schema.
         """
         if not data:
-            raise ValidationError("No title or author.")  
+            raise ValidationError("No id, title or author.")  
 
         for key, value in data.items():
-            data[key] = value.strip()
+            if isinstance(value, str):
+                data[key] = value.strip()
         return data
 
 
@@ -149,13 +150,16 @@ class BookSearchSchemaAdmin(ma.Schema):
             raise ValidationError("No id, title or author.")
 
         if 'id' in data or 'title' in data or 'author' in data:
-            #Get the number of keys in the dictionary
             counter = 0
 
             #Assert, there is at least one field filled, otherwise raise validation error.
             for key, value in data.items():
-                if not value.isspace() and value:
-                    counter += 1
+                if isinstance(value, int):
+                    if value:
+                        counter +=1
+                if isinstance(value, str):
+                    if not value.isspace() and value:
+                        counter += 1
 
             if counter == 0:
                 raise ValidationError("No id, title or author.")

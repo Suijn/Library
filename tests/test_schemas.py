@@ -628,3 +628,87 @@ class TestBookSearchSchemaAdmin:
         assert loaded_data['title'] ==  data['title'].strip()
         assert loaded_data['author'] == data['author'].strip()
 
+
+    def test_load_ok(self, schema):
+        """Assert schema returns no exceptions if data is valid."""
+        data = {
+            'id':1,
+            'title':'title',
+            'author':'author'
+        }
+
+        errors = schema.validate(data)
+        assert not errors
+    
+    def test_load_only_id(self, schema):
+        """Assert schema returns no exceptions if data is valid."""
+        data = {
+            'id':1
+        }
+        errors = schema.validate(data)
+        assert not errors
+
+    
+    def test_load_only_title(self, schema):
+        """Assert schema returns no exceptions if data is valid."""
+        data = {
+            'title':'title'
+        }
+        errors = schema.validate(data)
+        assert not errors
+
+
+    def test_load_only_author(self, schema):
+        """Assert schema returns no exceptions if data is valid."""
+        data = {
+            'author':'author'
+        }
+        errors = schema.validate(data)
+        assert not errors
+
+    
+    def test_load_missing_fields(self, schema):
+        """Assert schema raises exceptions if data is invalid."""
+
+        data = {
+
+        }
+        errors = schema.validate(data)
+        assert errors
+        assert errors['_schema']
+        assert errors['_schema'][0] == 'No id, title or author.'
+
+    
+    def test_load_data_only_spaces(self, schema):
+        """Assert schema raises exceptions if data is invalid."""
+
+        data = {
+            'title':'  ',
+            'author':'  '
+        }
+        errors = schema.validate(data)
+        assert errors
+        assert errors['_schema']
+        assert errors['_schema'][0] == 'No id, title or author.'
+
+    
+    def test_load_data_empty(self, schema):
+        """Assert schema raises exceptions if data is invalid."""
+
+        data = {
+            'title':'',
+            'author':''
+        }
+
+        errors = schema.validate(data)
+        assert errors
+        assert errors['_schema']
+        assert errors['_schema'][0] == 'No id, title or author.'
+
+    
+    def test_schema_load_only(self, schema):
+        """Assert schema is load-only."""
+        book = Book(title='title', author='author')
+
+        dumped_book = schema.dump(book)
+        assert not dumped_book

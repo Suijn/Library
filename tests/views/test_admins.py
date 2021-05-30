@@ -590,7 +590,6 @@ def test_search_for_books_400_all_fields_empty(client, admin_access_token, db_po
     """
 
     data = {
-        'id': '',
         'author': '',
         'title': ''
     }
@@ -618,7 +617,6 @@ def test_search_for_books_400_all_fields_only_whitespaces(client, admin_access_t
     """
 
     data = {
-        "id": "      ",
         "author": "        ",
         "title": " "
     }
@@ -645,7 +643,6 @@ def test_search_for_books_400_all_fields_empty_or_whitespaces(client, admin_acce
     :assert: error message is sent in response.
     """
     data = {
-        "id": "      ",
         "author": "",
         "title": "     "
     }
@@ -702,7 +699,6 @@ def test_search_for_books_only_title_other_empty_or_spaces_ok(client, admin_acce
     :assert: api returns proper data.
     """
     data = {
-        "id": "",
         "author": "author",
         "title": "     "
     }
@@ -735,7 +731,6 @@ def test_search_for_books_only_author_other_empty_or_spaces_ok(client, admin_acc
     :assert: api returns proper data.
     """
     data = {
-        "id": "",
         "author": "   ",
         "title": "book1"
     }
@@ -766,7 +761,6 @@ def test_search_for_books_trims_spaces_ok(client, admin_access_token, db_populat
     :assert: proper data is returned.
     """
     data = {
-        "id": "",
         "author": " 1",
         "title": "  book2  "
     }
