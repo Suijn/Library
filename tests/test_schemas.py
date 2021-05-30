@@ -1,5 +1,5 @@
 """A test module for testing marshmallow schemas."""
-from bookstore.models import Book, BookSchema, BookSearchSchema, BookUpdateSchema, Reservation, ReservationSchema
+from bookstore.models import Book, BookSchema, BookSearchSchema, BookSearchSchemaAdmin, BookUpdateSchema, Reservation, ReservationSchema
 import pytest
 from bookstore.users.models import LoginSchema, RegisterSchema, UpdatePasswordSchema
 from bookstore.users.models import User, Role
@@ -603,4 +603,28 @@ class TestBookSearchSchema:
         loaded_data = schema.load(data)
         assert loaded_data['title'] == 'title'
         assert loaded_data['author'] == 'author'
+
+
+class TestBookSearchSchemaAdmin:
+
+    @pytest.fixture(scope='class')
+    def schema(self):
+        """Return schema."""
+        return BookSearchSchemaAdmin()
+
+    
+    def test_schema_trims_leading_trailing_whitespaces(self, schema):
+        """Assert schema trims leading and trailing whitespaces in the data."""
+        data = {
+            'id':1,
+            'title':'   title   ',
+            'author':'   author   '
+        }
+        
+        errors = schema.validate(data)
+        assert not errors
+
+        loaded_data = schema.load(data)
+        assert loaded_data['title'] ==  data['title'].strip()
+        assert loaded_data['author'] == data['author'].strip()
 
