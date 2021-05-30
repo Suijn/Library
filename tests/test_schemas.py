@@ -603,3 +603,4 @@ class TestBookSearchSchema:
         loaded_data = schema.load(data)
         assert loaded_data['title'] == 'title'
         assert loaded_data['author'] == 'author'
+

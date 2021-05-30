@@ -126,6 +126,20 @@ class BookSearchSchemaAdmin(ma.Schema):
     title = fields.Str()
     author = fields.Str()
 
+
+    @pre_load
+    def trim_leading_trailing_whitespaces(self, data, **kwargs):
+        """
+        Remove leading and trailing whitespaces from the data before loading the schema.
+        """
+        if not data:
+            raise ValidationError("No title or author.")  
+
+        for key, value in data.items():
+            data[key] = value.strip()
+        return data
+
+
     @validates_schema
     def validate_at_least_one_field_filled(self, data, **kwargs):
         '''Validates there is at least one field filled.'''
