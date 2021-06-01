@@ -4,7 +4,7 @@ import re
 
 from sqlalchemy.sql.selectable import subquery
 from tests.conftest import admin_access_token
-from bookstore.models import Book, BookSchema, Reservation
+from bookstore.models import Book, BookSchema, Reservation, ReservationSchema
 import pytest
 from sqlalchemy.exc import NoResultFound
 from bookstore.users.models import User
@@ -747,8 +747,8 @@ def test_search_for_books_only_author_other_empty_or_spaces_ok(client, admin_acc
     assert response.status_code == 200
     data_expected = book_schema.dump(Book.query.filter(
         Book.title.like("%{}%".format(data['title']))
-    ).one())
-    data_returned = response.json[0]
+    ).all(), many=True)
+    data_returned = response.json
 
     assert data_expected == data_returned
 
@@ -882,14 +882,14 @@ def test_reserve_book_400_book_already_reserved(client, admin_access_token, db_p
     :assert: reservation is not created.
     """
 
-    book = Book.get_or_404(1)
-    user = User.get_or_404(1)
-
     reservation_before = Reservation.query.filter(
-        Reservation.book_id == book.id,
         Reservation.status == 'STARTED'
-    ).one()
+    ).first()
+
     assert reservation_before
+
+    book = Book.get_or_404(reservation_before.book_id)
+    user = User.get_or_404(1)
 
     response = client.post(
         f'admin/reserveBook/{book.id}/{user.id}',
@@ -952,7 +952,7 @@ def test_cancel_reservation_ok(client, admin_access_token, db_populate_books, db
     :assert: no content in response.
     :assert: reservation is cancelled.
     """
-    book = Book.get_or_404(1)
+    book = Book.get_or_404(6)
     
     response = client.patch(
         f'admin/cancelResBook/{book.id}',
@@ -984,7 +984,7 @@ def test_cancel_reservation_401_unauthorized(client, normal_access_token, db_pop
     :assert: response status code is 401.
     :assert: reservation is not cancelled.
     """
-    book = Book.get_or_404(1)
+    book = Book.get_or_404(6)
     
     response = client.patch(
         f'admin/cancelResBook/{book.id}',
@@ -1007,4 +1007,199 @@ def test_cancel_reservation_401_unauthorized(client, normal_access_token, db_pop
         ).one() 
 
 
+class TestGetReservations:
+    """Tests for get_reservations function."""
 
+    @pytest.fixture(autouse=True)
+    def prepare_db(self, db_populate, db_populate_reservations):
+        """A fixture to prepare the test database for the tests."""
+
+
+    @pytest.fixture(scope='class')
+    def schema(self):
+        """A fixture that returns reservations schema."""
+        return ReservationSchema(many=True)
+
+
+    def test_where_status(self, client, admin_access_token):
+        """
+        Test get_reservations function with valid data.
+
+        :assert: api returns all reservations with status 'started'.
+        """
+
+        data = {
+            'status': "STARTED"
+        }
+
+        response = client.post(
+            'admin/getReservations',
+            headers={
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {admin_access_token}'
+            },
+            data = json.dumps(data)
+        )
+        assert response.status_code == 200
+        
+        schema = ReservationSchema(many=True)
+
+        expected_data = schema.dump(
+            Reservation.query.filter(
+                Reservation.status == data['status']
+        ).all())
+        data_returned = response.json
+        assert expected_data == data_returned
+
+    
+    def test_where_status_finished_and_user(self, client, admin_access_token, schema):
+        """
+        Test the get_reservation function with valid data.
+        
+        :assert: api returns all user reservations where status == 'FINISHED'.
+        """
+        data = {
+            'reserved_by': 1,
+            'status': 'FINISHED'
+        }
+        response = client.post(
+            'admin/getReservations',
+            headers={
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {admin_access_token}'
+            },
+            data = json.dumps(data)
+        )
+        assert response.status_code == 200
+
+        data_expected = schema.dump(
+            Reservation.query.filter(
+                Reservation.status == data['status'],
+                Reservation.reserved_by == data['reserved_by']
+            ).all())
+            
+        data_returned = response.json
+
+        assert data_expected == data_returned
+
+
+    def test_where_status_started_and_user(self, client, admin_access_token,schema):
+        """
+        Test the get_reservation function with valid data.
+        
+        :assert: api returns all user reservations where status == 'STARTED'.
+        """
+        data = {
+            'reserved_by': 1,
+            'status': 'STARTED'
+        }
+        response = client.post(
+            'admin/getReservations',
+            headers={
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {admin_access_token}'
+            },
+            data = json.dumps(data)
+        )
+        assert response.status_code == 200
+
+        data_expected = schema.dump(
+            Reservation.query.filter(
+                Reservation.status == data['status'],
+                Reservation.reserved_by == data['reserved_by']
+            ).all())
+            
+        data_returned = response.json
+
+        assert data_expected == data_returned     
+
+
+    def test_where_user(self, client, admin_access_token, schema):
+        """
+        Test the get_reservations function with valid data.
+
+        :assert: api returns all user reservations.
+        """
+        data = {
+            'reserved_by': 1
+        }
+        response = client.post(
+            'admin/getReservations',
+            headers={
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {admin_access_token}'
+            },
+            data = json.dumps(data)
+        )
+        assert response.status_code == 200
+
+        expected_data = schema.dump(
+            Reservation.query.filter(
+                Reservation.reserved_by == data['reserved_by']
+        ).all())
+
+        data_returned = response.json
+        assert expected_data == data_returned
+
+    
+    def test_where_book(self, client, admin_access_token, schema):
+        """
+        Test the get_reservations function with valid data.
+
+        :assert: api returns all reservations of the book.
+        """
+        data = {
+            'book_id': 1
+        }
+        response = client.post(
+            'admin/getReservations',
+            headers={
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {admin_access_token}'
+            },
+            data = json.dumps(data)
+        )
+        assert response.status_code == 200
+        assert response.json
+
+        expected_data = schema.dump(
+            Reservation.query.filter(
+                Reservation.book_id == data['book_id']
+        ).all())
+
+        data_returned = response.json
+        assert expected_data == data_returned
+
+
+    def test_where_book_user_status(self, client, admin_access_token, schema):
+        """
+        Test the get_reservations function with valid data.
+
+        :assert: api returns all reservations based on the data specified in requests..
+        """   
+
+        data = {
+            'reserved_by': 1,
+            'book_id': 1,
+            'status': 'FINISHED'
+        }
+        response = client.post(
+            'admin/getReservations',
+            headers={
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {admin_access_token}'
+            },
+            data = json.dumps(data)
+        )
+        assert response.status_code == 200
+        assert response.json
+
+        expected_data = schema.dump(
+            Reservation.query.filter(
+                Reservation.book_id == data['book_id'],
+                Reservation.reserved_by == data['reserved_by'],
+                Reservation.status == data['status']
+        ).all())
+
+        data_returned = response.json
+        assert expected_data == data_returned

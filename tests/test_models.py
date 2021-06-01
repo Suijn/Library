@@ -111,7 +111,7 @@ class TestReservation:
         from datetime import date
         from bookstore.utils import calculate_end_date
 
-        reservation = Reservation.query.get(1)
+        reservation = Reservation.query.get(9)
 
         assert reservation.status == 'STARTED'
         assert reservation.was_prolonged == False

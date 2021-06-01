@@ -163,7 +163,30 @@ class BookSearchSchemaAdmin(ma.Schema):
 
             if counter == 0:
                 raise ValidationError("No id, title or author.")
+
+class GetReservationSchema(ma.Schema):
+    """A schema to search for reservations."""
+    status = fields.Str(missing=None, load_only=True)
+    reserved_by = fields.Int(missing=None, load_only=True)
+    book_id = fields.Int(missing=None, load_only=True)
+
+    @pre_load
+    def trim_leading_trailing_whitespaces(self, data, **kwargs):
+        """Trim leading and trailing whitespaces before loading."""
+        if not data:
+            raise ValidationError("No status, user or book.")  
+
+        for key, value in data.items():
+            if isinstance(value, str):
+                data[key] = value.strip()
+        return data
     
+    
+    @validates_schema
+    def validate_at_least_one_field_filled(self, data, **kwargs):
+        """Validate at least one field is filled."""
+        pass
+        
 
 
 

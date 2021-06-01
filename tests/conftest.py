@@ -1,4 +1,6 @@
 """A file for pytest fixtures."""
+from _pytest.capture import TeeCaptureIO
+from werkzeug.exceptions import TooManyRequests
 from bookstore.models import Reservation, ReservationSchema
 import pytest
 from bookstore.main import create_app
@@ -68,16 +70,12 @@ def db_populate(db):
 @pytest.fixture()
 def db_populate_books(db):
     """Populate the test database with mock books data."""
+    books = []
 
-    #Create books.
-    books = [
-        Book(title='Book1', author='Author1'),
-        Book(title='Book2', author='Author2'),
-        Book(title='Book3', author='Author2'),
-        Book(title='Book4', author='Author3'),
-        Book(title='Book5', author='Author3'),
-        Book(title='Book6', author='Author4'),
-    ]
+    for x in range(20):
+        books.append(
+            Book(title=f'Book{x}', author=f'Author{x}')
+        )
     
     db.session.add_all(books)
     db.session.commit()
@@ -85,12 +83,12 @@ def db_populate_books(db):
 
 @pytest.fixture()
 def db_populate_reservations(db_populate_books, db):
-    """Populate the mock database with test reservations data."""
+    """Populate the mock database with reservations data."""
 
     books = db.session.query(Book).all()
     users = db.session.query(User).all()
 
-    for x in range(5):
+    for x in range(len(users)):
         res = Reservation()
         res.book = books[x]
         res.user = users[x]
@@ -99,6 +97,48 @@ def db_populate_reservations(db_populate_books, db):
         users[x].books_amount += 1
 
         db.session.add(res)
+    db.session.commit()
+    
+    #Make some additional reservations.
+    res1 = Reservation()
+    res1.user = users[1]
+    res1.book = books[6]
+    books[6].isReserved = True
+    db.session.add(res1)
+
+    res2 = Reservation()
+    res2.user = users[0]
+    res2.book = books[7]
+    books[7].isReserved = True
+    db.session.add(res2)
+
+    res3 = Reservation()
+    res3.user = users[2]
+    res3.book = books[8]
+    books[8].isReserved = True
+    db.session.add(res3)
+
+    res4 = Reservation()
+    res4.user = users[3]
+    res4.book = books[9]
+    books[9].isReserved = True
+    db.session.add(res4)
+    
+    res5 = Reservation()
+    res5.user = users[4]
+    res5.book = books[9]
+    books[9].isReserved = True
+    db.session.add(res5)
+
+    db.session.commit()
+
+    #Mark some reservations as 'Finished'.
+    for x in range(1,5):
+        res = Reservation.query.get(x)
+        res.status='FINISHED'
+        book = Book.get_or_404(res.reserved_by)
+        book.isReserved = False
+    
     db.session.commit()
 
 

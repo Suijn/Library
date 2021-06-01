@@ -411,7 +411,7 @@ class TestUsers:
         :assert: response status code is 400.
         :assert: reservation was not made.
         """
-        book = Book.query.get(3)
+        book = Book.query.get(8)
 
         response = client.post(
             'users/reserveBook/' + str(book.id),
@@ -504,7 +504,10 @@ class TestUsers:
         :assert: reservation for the book was prolonged.  
         """
         user = User.query.filter(User.email == 'user@test.com').one()
-        book_id = user.reservations[0].book_id
+        book_id = Reservation.query.join(User).filter(
+            Reservation.reserved_by == user.id,
+            Reservation.status == 'STARTED'
+        ).first().book_id
         
 
         response = client.patch(
@@ -534,8 +537,15 @@ class TestUsers:
         :assert: reservation wasn't prolonged.
         """
         user = User.query.filter(User.email == 'user@test.com').one()
-        book_id = user.reservations[0].book_id
 
+        #Find a book that wasn't prolonged yet.
+        book_id = reservation = Reservation.query.filter(
+            Reservation.reserved_by == user.id,
+            Reservation.status == 'STARTED',
+            Reservation.was_prolonged == False
+        ).first().book_id
+        
+        # prolong the book.
         client.patch(
             'users/prolongBook/' + str(book_id),
             headers = {
@@ -543,7 +553,9 @@ class TestUsers:
                 'Authorization': 'Bearer ' + normal_access_token
             }
         )
-
+        
+        #Try to prolong it one more time.
+        
         reservation = Reservation.query.filter(
             Reservation.book_id == book_id,
             Reservation.reserved_by == user.id,
@@ -590,11 +602,7 @@ class TestUsers:
         )
 
         assert response.status_code == 401
-        assert end_date ==  Reservation.query.filter(
-            Reservation.book_id == 1,
-            Reservation.status == 'STARTED'
-        ).one().expected_end_date
-
+        assert end_date ==  Reservation.query.get(1).expected_end_date
     
     def test_prolong_book_401_token_missing(self, client, db_populate_reservations):
         """
@@ -605,7 +613,11 @@ class TestUsers:
         :assert: reservation wasn't prolonged.
         """
         user = User.query.filter(User.email == 'user@test.com').one()
-        book_id = user.reservations[0].book_id
+        book_id = Reservation.query.join(User).filter(
+            Reservation.reserved_by == user.id,
+            Reservation.status == 'STARTED',
+            Reservation.was_prolonged == False
+        ).first().book_id
 
         end_date = user.reservations[0].expected_end_date
 

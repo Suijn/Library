@@ -1,10 +1,12 @@
 """A view module for admins to manage users, books and reservations."""
+from copy import error
 from flask import (Blueprint, jsonify, request, abort)
-from ..models import (Book, Reservation, BookSchema, BookSearchSchemaAdmin, BookUpdateSchema)
+from sqlalchemy.sql.expression import true
+from ..models import (Book, GetReservationSchema, Reservation, BookSchema, BookSearchSchemaAdmin, BookUpdateSchema, ReservationSchema)
 from ..decorators import require_role
 from flask_jwt_extended import jwt_required
 from ..extensions import db
-from marshmallow import ValidationError
+from marshmallow import ValidationError, fields
 from ..users.models import User
 from datetime import date
 
@@ -210,3 +212,35 @@ def cancel_reservation(book_id):
     db.session.commit()
 
     return '', 204
+
+
+@blueprint.route('/getReservations', methods=['POST'])
+@jwt_required()
+@require_role(['Admin'])
+def get_reservations():
+    """
+    Run a search on reservations based on data sent in request.
+    """
+    schema = GetReservationSchema()
+
+    try:
+        data = schema.load(request.json)
+    except ValidationError as error:
+        return error.messages, 400    
+
+    query = Reservation.query
+
+    for key, value in request.json.items():
+        query = query.filter(
+            getattr(Reservation, key) == value
+        )
+
+    reservations = query.all()
+
+    schema = ReservationSchema(many=True)
+    data = schema.dump(reservations)
+
+    return jsonify(data), 200
+
+
+
