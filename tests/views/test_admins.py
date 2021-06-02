@@ -1203,3 +1203,190 @@ class TestGetReservations:
 
         data_returned = response.json
         assert expected_data == data_returned
+
+
+    def test_data_leading_trailing_whitespaces(self, client, admin_access_token, schema):
+        """
+        Test the get_reservations function with whitespaces in data.
+
+        :assert: api returns status code 200 and proper data.
+        """
+        data = {
+            'reserved_by': 1,
+            'book_id': 1,
+            'status': '    FINISHED    '
+        }
+        response = client.post(
+            'admin/getReservations',
+            headers={
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {admin_access_token}'
+            },
+            data = json.dumps(data)
+        )
+        assert response.status_code == 200
+        assert response.json
+
+        expected_data = schema.dump(
+            Reservation.query.filter(
+                Reservation.book_id == data['book_id'],
+                Reservation.reserved_by == data['reserved_by'],
+                Reservation.status == data['status'].strip()
+            ).all()
+        )
+
+        data_returned = response.json
+        assert expected_data == data_returned
+
+
+    
+    def test_user_book_as_string(self, client, admin_access_token, schema):
+        """
+        Test the get_reservations function with all data as strings.
+        :assert: api returns status code 200 and proper data.
+        """
+        data = {
+            'reserved_by': '1',
+            'book_id': '1',
+            'status': 'FINISHED'
+        }
+        response = client.post(
+            'admin/getReservations',
+            headers={
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {admin_access_token}'
+            },
+            data = json.dumps(data)
+        )
+        assert response.status_code == 200
+        assert response.json
+        
+        expected_data = schema.dump(
+            Reservation.query.filter(
+                Reservation.book_id == data['book_id'],
+                Reservation.reserved_by == data['reserved_by'],
+                Reservation.status == data['status']
+            ).all()
+        )
+        assert expected_data == response.json
+
+    
+    def test_missing_required_data(self, client, admin_access_token):
+        """
+        Test the get_reservations function with missing data.
+
+        :assert: schema raises validation error if there's no data in request.
+        """
+        data = {
+
+        }
+        response = client.post(
+            'admin/getReservations',
+            headers={
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {admin_access_token}'
+            },
+            data = json.dumps(data)
+        )
+
+        assert response.status_code == 400
+        assert '_schema' in response.json
+        assert 'No status, user or book.' in response.json['_schema'] 
+
+
+    def test_missing_data_only_whitespaces(self, client, admin_access_token):
+        """
+        Test the get_reservations function with only whitespaces in data.
+
+        :assert: response status code is 400.
+        :assert: api returns errors in response.
+        """
+        data = {
+            'reserved_by': ' ',
+            'book_id': ' ',
+            'status': '    '
+        }
+        response = client.post(
+            'admin/getReservations',
+            headers={
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {admin_access_token}'
+            },
+            data = json.dumps(data)
+        )
+        assert response.status_code == 400
+        assert '_schema' in response.json 
+
+
+    
+    def test_missing_data_all_fields_empty(self, client, admin_access_token):
+        """
+        Test the get_reservations function with all data empty.
+
+        :assert: response status code is 400.
+        :assert: api returns errors in response.
+        """
+        data = {
+            'reserved_by': '',
+            'book_id': '',
+            'status': ''
+        }
+        response = client.post(
+            'admin/getReservations',
+            headers={
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {admin_access_token}'
+            },
+            data = json.dumps(data)
+        )
+        assert response.status_code == 400
+        assert '_schema' in response.json
+
+
+    def test_missing_data_only_status_and_empty(self, client, admin_access_token):
+        """
+        Test the get_reservations function with invalid data.
+        :assert: response status code is 400.
+        :assert: errors are sent in response.
+        """
+        data = {
+            'status': ''
+        }
+        response = client.post(
+            'admin/getReservations',
+            headers={
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {admin_access_token}'
+            },
+            data = json.dumps(data)
+        )
+        assert response.status_code == 400
+        assert '_schema' in response.json
+
+
+    def test_unauthorized(self, client, normal_access_token, schema):
+        """
+        Test the get_reservations function with valid data but invalid access token.
+
+        :assert: api returns status code 401 and data is not returned.
+        """
+        data = {
+            'status': 'FINISHED'
+        }
+        response = client.post(
+            'admin/getReservations',
+            headers={
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {normal_access_token}'
+            },
+            data = json.dumps(data)
+        )
+        assert response.status_code == 401
+
+        expected_data = schema.dump(
+            Reservation.query.filter(
+                Reservation.status == data['status']
+            )
+        )
+
+        assert not expected_data in response.json
