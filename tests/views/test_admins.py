@@ -1297,6 +1297,7 @@ class TestGetReservations:
     def test_missing_data_only_whitespaces(self, client, admin_access_token):
         """
         Test the get_reservations function with only whitespaces in data.
+        
 
         :assert: response status code is 400.
         :assert: api returns errors in response.
@@ -1315,13 +1316,15 @@ class TestGetReservations:
             data = json.dumps(data)
         )
         assert response.status_code == 400
-        assert '_schema' in response.json 
+        assert 'Not a valid integer.' in response.json['book_id']
+        assert 'Not a valid integer.' in response.json['reserved_by']
 
 
     
     def test_missing_data_all_fields_empty(self, client, admin_access_token):
         """
-        Test the get_reservations function with all data empty.
+        Test the get_reservations function with invalid data (reserved_by, book_id)
+        -- integer expected or a string that can be converted to integer.
 
         :assert: response status code is 400.
         :assert: api returns errors in response.
@@ -1329,7 +1332,7 @@ class TestGetReservations:
         data = {
             'reserved_by': '',
             'book_id': '',
-            'status': ''
+            'status': 'FINISHED'
         }
         response = client.post(
             'admin/getReservations',
@@ -1340,8 +1343,9 @@ class TestGetReservations:
             data = json.dumps(data)
         )
         assert response.status_code == 400
-        assert '_schema' in response.json
-
+        assert 'Not a valid integer.' in response.json['book_id']
+        assert 'Not a valid integer.' in response.json['reserved_by']
+        
 
     def test_missing_data_only_status_and_empty(self, client, admin_access_token):
         """
@@ -1382,11 +1386,5 @@ class TestGetReservations:
             data = json.dumps(data)
         )
         assert response.status_code == 401
+        assert not response.json
 
-        expected_data = schema.dump(
-            Reservation.query.filter(
-                Reservation.status == data['status']
-            )
-        )
-
-        assert not expected_data in response.json

@@ -185,7 +185,20 @@ class GetReservationSchema(ma.Schema):
     @validates_schema
     def validate_at_least_one_field_filled(self, data, **kwargs):
         """Validate at least one field is filled."""
-        pass
+        if not data:
+            raise ValidationError("No status, user or book.") 
+
+        counter = 0 # a counter to count properly filled fields.
+        for key, value in data.items():
+            if isinstance(value, int):
+                if value:
+                    counter+=1
+            elif isinstance(value, str):
+                if value and not value.isspace():
+                    counter += 1
+        
+        if counter == 0:
+            raise ValidationError('No status, user or book.')
         
 
 
