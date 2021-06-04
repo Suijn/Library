@@ -39,7 +39,7 @@ def search_for_books():
     """
     A search utility for users to search for books by title and author.
     
-    At least one field is required, if one field is empty - match anything.
+    At least one field is required.
     """
     schema = BookSearchSchema()
 
