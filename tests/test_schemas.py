@@ -1,5 +1,5 @@
 """A test module for testing marshmallow schemas."""
-from bookstore.models import Book, BookSchema, BookSearchSchema, BookSearchSchemaAdmin, BookUpdateSchema, Reservation, ReservationSchema
+from bookstore.models import Book, BookSchema, BookSearchSchema, BookSearchSchemaAdmin, BookUpdateSchema, GetReservationSchema, Reservation, ReservationSchema
 import pytest
 from bookstore.users.models import LoginSchema, RegisterSchema, UpdatePasswordSchema
 from bookstore.users.models import User, Role
@@ -712,3 +712,207 @@ class TestBookSearchSchemaAdmin:
 
         dumped_book = schema.dump(book)
         assert not dumped_book
+
+
+class TestGetReservationSchema:
+    """Test GetReservationSchema."""
+
+
+    @pytest.fixture(scope='class')
+    def schema(self):
+        """A fixture that returns a GetReservationSchema object."""
+        return GetReservationSchema()
+    
+
+    def test_trims_leading_trailing_whitespaces(self, schema):
+        """
+        :assert: schema trims leading and trailing whitespaces in data.
+        """
+        data = {
+            'reserved_by': 1,
+            'book_id': 1,
+            'status': '    FINISHED    '
+        }
+        errors = schema.validate(data)
+        assert not errors
+
+        loaded_data = schema.load(data)
+
+        expected_data = {
+            'reserved_by': 1,
+            'book_id': 1,
+            'status': 'FINISHED'
+        }
+
+        assert loaded_data == expected_data
+
+    
+    def test_string_convertable_to_int(self, schema):
+        """
+        If reserved_by or book_id fields are sent as string, but are convertable to int:
+        :assert: schema converts strings to int.
+        """
+        data = {
+            'reserved_by': '1',
+            'book_id': '1',
+            'status': 'FINISHED'
+        }
+        errors = schema.validate(data)
+        assert not errors
+
+        loaded_data = schema.load(data)
+        expected_data = {
+            'reserved_by': 1,
+            'book_id': 1,
+            'status': 'FINISHED'
+        }
+        assert loaded_data == expected_data
+
+    
+    def test_string_not_convertable_to_int(self, schema):
+        """
+        If reserved_by or book_id fields are sent as strings but are not convertable to int:
+        :assert: schema raises errors. 
+        """
+        data = {
+            'reserved_by': 'invalid_data1',
+            'book_id': 'invalid_data2',
+            'status': 'FINISHED'
+        }
+        errors = schema.validate(data)
+        assert errors
+        assert 'reserved_by' in errors and 'book_id' in errors
+        assert 'Not a valid integer.' in errors['reserved_by']
+        assert 'Not a valid integer.' in errors['book_id']
+
+    
+    def test_load_ok(self, schema):
+        """
+        Test schema loading with valid data.
+        :assert: schema raises no exceptions.
+        """
+        data = {
+            'reserved_by': 1,
+            'book_id': 1,
+            'status': 'FINISHED'
+        }
+        errors = schema.validate(data)
+        assert not errors
+    
+
+    def test_load_ok_2(self, schema):
+        """
+        Test schema loading with valid data.
+        :assert: schema raises no exceptions.
+        """
+
+        data = {
+            'reserved_by': '  1  ',
+            'book_id': '  1  ',
+            'status': '  FINISHED  '
+        }
+        errors = schema.validate(data)
+        assert not errors
+
+        expected_data = {
+            'reserved_by': 1,
+            'book_id': 1,
+            'status': 'FINISHED'    
+        }
+        loaded_data = schema.load(data)
+        assert expected_data == loaded_data
+    
+    
+    def test_load_only_status(self, schema):
+        """
+        Test schema loading with valid data.
+        :assert: schema returns no errors.
+        """
+        data = {
+            'status': 'FINISHED'
+        }
+
+        errors = schema.validate(data)
+        assert not errors
+    
+
+    def test_load_only_reserved_by(self, schema):
+        """
+        Test schema loading with valid data.
+        :assert: schema returns no errors.
+        """
+        data = {
+            'reserved_by': 1
+        }
+
+        errors = schema.validate(data)
+        assert not errors
+
+
+    def test_load_only_book_id(self, schema):
+        """
+        Test schema loading with valid data.
+        :assert: schema returns no errors.
+        """
+        data = {
+            'book_id': 1
+        }
+
+        errors = schema.validate(data)
+        assert not errors
+    
+    def test_validate_at_least_one_field_filled_one_field_and_empty(self, schema):
+        """
+        Test the validate_at_least_one_field_filled method.
+        Given invalid data:
+        :assert: schema raises ValidationErrors.
+        """
+        data = {
+            'status':''
+        }
+        errors = schema.validate(data)
+        assert errors
+        assert '_schema' in errors
+        assert "No status, user or book." in errors['_schema'] 
+
+
+    def test_validate_at_least_one_field_filled_one_field_only_whitespaces(self, schema):
+        """
+        Test the validate_at_least_one_field_filled method.
+        Given invalid data:
+        :assert: schema returns errors.
+        """
+        data = {
+            'status': '      '
+        }
+        errors = schema.validate(data)
+        assert errors
+        assert '_schema' in errors
+        assert "No status, user or book." in errors['_schema'] 
+
+
+    def test_validate_at_least_one_field_filled_data_empty(self, schema):
+        """
+        Test the validate_at_least_one_field_filled method.
+        Given invalid data:
+        :assert: schema returns errors.
+        """
+        data = {
+
+        }
+        errors = schema.validate(data)
+        assert errors
+        assert '_schema' in errors
+        assert "No status, user or book." in errors['_schema'] 
+    
+
+    def test_schema_load_only(self, schema, db_populate, db_populate_reservations):
+        """
+        Test schema dumping returns no data.
+        """
+        reservations = Reservation.query.filter(
+            Reservation.reserved_by == 1
+        )
+        dumped_data = schema.dump(reservations)
+
+        assert not dumped_data
