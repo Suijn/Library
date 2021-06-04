@@ -48,24 +48,15 @@ def search_for_books():
     except ValidationError as err:
         return err.messages, 400
 
+    
+    query = Book.query
 
-    #Remove additional whitespace's
-    #If field is empty - match anything.
-    try:
-        book_title = "%{}%".format(request.json['title'].strip())
-    except KeyError:
-        book_title = "%{}%".format('')
+    for key, value in request.json.items():
+        query = query.filter(
+            getattr(Book, key).like(f'%{value}%')
+        )
 
-    try:
-        book_author = "%{}%".format(request.json['author'].strip())
-    except KeyError:
-        book_author = "%{}%".format('')
-
-        
-    books = Book.query.filter(
-        Book.title.like(book_title), 
-        Book.author.like(book_author)
-    ).all()
+    books = query.all()
 
     payload = books_schema.dump(books)
     return jsonify(payload), 200
