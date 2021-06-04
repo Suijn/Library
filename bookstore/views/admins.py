@@ -88,13 +88,10 @@ def delete_book(id):
 @require_role(['Admin'])
 def search_for_books():
     """
-    Search book utility for admin users.
+    Book search engine for admin users.
     
     If book_id is sent in request -- return the book with the given id.
-    If book_id wasn't sent in request -- continue the search using title and author fields.
-        If both title and author are filled -- search for the book with these attributes.
-        If only title or author was filled -- search for the book using only the attribute that was filled.
-
+    If book_id is not sent in request -- continue the search using the title and author fields.
     """
     schema = BookSearchSchemaAdmin()
 
@@ -103,7 +100,7 @@ def search_for_books():
     except ValidationError as err:
         return err.messages, 400
     
-    #If id is filled, then the search function returns the book with the given id.
+    # #If id is filled, return the book with the given id.
     if 'id' in request.json:
         if request.json['id']:
             book_id = request.json['id']
@@ -111,40 +108,17 @@ def search_for_books():
             payload = book_schema.dump(book)
             return payload, 200
     
-    #If there's no book_id in request, then the search proceeds with the other attributes. 
-    if 'title' in request.json and 'author' in request.json:
-        #Remove leading and trailing spaces.
-        title = request.json['title'].strip()
-        author = request.json['author'].strip()
+    query = Book.query
 
-        if title and author:
-            #If both title and author are sent in request: 
-            book_title = "%{}%".format(title)
-            book_author = "%{}%".format(author)
+    for key, value in request.json.items():
+        query = query.filter(
+            getattr(Book, key).like(f'%{value}%')
+        )
 
-            books = Book.query.filter(
-                Book.title.like(book_title), 
-                Book.author.like(book_author)
-            ).all()
-            payload = books_schema.dump(books)
-            return jsonify(payload), 200
-    if 'title' in request.json or 'author' in request.json:
-        books = []
-        if 'title' in request.json and not request.json['title'].isspace():
-            #Remove leading and trailing spaces.
-            title = request.json['title'].strip()
-            books = Book.query.filter(
-                Book.title.like("%{}%".format(title)), 
-            ).all()
-        else:
-            #Remove leading and trailing spaces.
-            author = request.json['author'].strip()
-            books = Book.query.filter(
-                Book.author.like("%{}%".format(request.json['author'])), 
-            ).all()
+    books = query.all()
 
-        payload = books_schema.dump(books)
-        return jsonify(payload), 200
+    payload = books_schema.dump(books)
+    return jsonify(payload), 200
 
 
 @blueprint.route('/reserveBook/<book_id>/<user_id>', methods=['POST'])
